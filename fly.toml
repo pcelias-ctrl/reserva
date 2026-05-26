@@ -1,0 +1,28 @@
+app = 'reserva-online-pcelias'
+primary_region = 'gru'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  APP_NAME = 'Reserva On-line'
+  APP_URL = 'https://reserva-online-pcelias.fly.dev'
+  DB_HOST = 'reserva-online-mysql-pcelias.internal'
+  DB_NAME = 'reserva_online'
+  DB_PORT = '3306'
+  DB_USER = 'reserva_user'
+  MAIL_FROM = 'reservas@localhost'
+  MAIL_FROM_NAME = 'Reserva On-line'
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 512

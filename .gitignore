@@ -1,4 +1,7 @@
 .env
+.fly-db-pass.local
+.fly-ssh
+.fly-ssh-cert.pub
 *.log
 vendor/
 node_modules/

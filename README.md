@@ -49,6 +49,36 @@ Login inicial do administrador:
 - Email: `admin@reserva.local`
 - Senha: `admin123`
 
+## Deploy no Fly.io
+
+Este projeto ja inclui configuracao para rodar no Fly com PHP 8.2/Apache e MySQL
+em um app separado.
+
+Apps sugeridos:
+
+- Aplicacao: `reserva-online-pcelias`
+- Banco MySQL: `reserva-online-mysql-pcelias`
+- Regiao: `gru` Sao Paulo
+
+Comandos principais:
+
+```bash
+fly apps create reserva-online-mysql-pcelias
+fly volumes create mysqldata --app reserva-online-mysql-pcelias --region gru --size 10
+fly secrets set --app reserva-online-mysql-pcelias MYSQL_PASSWORD=SENHA_DO_USUARIO MYSQL_ROOT_PASSWORD=SENHA_ROOT
+fly deploy --config fly.mysql.toml
+
+fly apps create reserva-online-pcelias
+fly secrets set --app reserva-online-pcelias DB_PASS=SENHA_DO_USUARIO MAIL_ADMIN_TO=admin@seudominio.com
+fly deploy --config fly.toml
+fly ssh console --app reserva-online-pcelias -C "php /var/www/html/scripts/init-db.php"
+```
+
+Depois do deploy:
+
+- Cliente: `https://reserva-online-pcelias.fly.dev`
+- Admin: `https://reserva-online-pcelias.fly.dev/admin/login.php`
+
 ## Escopo da primeira versao
 
 - Reserva publica sem login.
