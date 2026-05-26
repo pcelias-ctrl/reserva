@@ -1,0 +1,76 @@
+<?php
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/mailer.php';
+
+verify_csrf();
+
+$customer = current_customer();
+$customerId = $customer ? (int)$customer['id'] : null;
+$email = trim($_POST['customer_email']);
+$name = trim($_POST['customer_name']);
+$phone = trim($_POST['customer_phone']);
+
+if (!$customerId && !empty($_POST['customer_password'])) {
+    $stmt = $pdo->prepare('SELECT id FROM customers WHERE email = ?');
+    $stmt->execute(array($email));
+    if (!$stmt->fetch()) {
+        $stmt = $pdo->prepare('INSERT INTO customers (name, email, phone, password_hash, lgpd_marketing_consent) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute(array($name, $email, $phone, password_hash($_POST['customer_password'], PASSWORD_DEFAULT), isset($_POST['lgpd_share_consent']) ? 1 : 0));
+        $customerId = (int)$pdo->lastInsertId();
+        $_SESSION['customer'] = array('id' => $customerId, 'name' => $name, 'email' => $email, 'phone' => $phone);
+    }
+}
+
+$occasionId = !empty($_POST['occasion_id']) ? (int)$_POST['occasion_id'] : null;
+$environmentId = !empty($_POST['environment_id']) ? (int)$_POST['environment_id'] : null;
+
+$stmt = $pdo->prepare(
+    'INSERT INTO reservations
+    (customer_id, occasion_id, environment_id, customer_name, customer_email, customer_phone, reservation_date, reservation_time, party_size, birthday_day, birthday_month, dietary_restrictions, notes, lgpd_terms_consent, lgpd_share_consent)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+);
+$stmt->execute(array(
+    $customerId,
+    $occasionId,
+    $environmentId,
+    $name,
+    $email,
+    $phone,
+    $_POST['reservation_date'],
+    $_POST['reservation_time'],
+    (int)$_POST['party_size'],
+    !empty($_POST['birthday_day']) ? (int)$_POST['birthday_day'] : null,
+    !empty($_POST['birthday_month']) ? (int)$_POST['birthday_month'] : null,
+    trim($_POST['dietary_restrictions']),
+    trim($_POST['notes']),
+    isset($_POST['lgpd_terms_consent']) ? 1 : 0,
+    isset($_POST['lgpd_share_consent']) ? 1 : 0
+));
+
+$reservationId = (int)$pdo->lastInsertId();
+$answerLabels = array();
+if (!empty($_POST['answers']) && is_array($_POST['answers'])) {
+    $questionStmt = $pdo->prepare('SELECT label FROM questionnaire_questions WHERE id = ?');
+    $answerStmt = $pdo->prepare('INSERT INTO reservation_answers (reservation_id, question_id, answer) VALUES (?, ?, ?)');
+    foreach ($_POST['answers'] as $questionId => $answer) {
+        $answerText = is_array($answer) ? implode(', ', $answer) : trim($answer);
+        if ($answerText === '') {
+            continue;
+        }
+        $answerStmt->execute(array($reservationId, (int)$questionId, $answerText));
+        $questionStmt->execute(array((int)$questionId));
+        $question = $questionStmt->fetch();
+        if ($question) {
+            $answerLabels[$question['label']] = $answerText;
+        }
+    }
+}
+
+$stmt = $pdo->prepare("SELECT r.*, COALESCE(o.name, 'Nenhuma') AS occasion_name FROM reservations r LEFT JOIN occasions o ON o.id = r.occasion_id WHERE r.id = ?");
+$stmt->execute(array($reservationId));
+$reservation = $stmt->fetch();
+notify_reservation_created($reservation, $answerLabels);
+
+flash('success', 'Reserva enviada. O restaurante vai analisar e confirmar por email.');
+redirect_to('obrigado.php?id=' . $reservationId);
