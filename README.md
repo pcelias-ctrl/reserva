@@ -83,6 +83,7 @@ Depois do deploy:
 
 - Reserva publica sem login.
 - Reserva com cliente logado.
+- Multi-restaurante com dados cadastrais, logo por URL e WhatsApp.
 - Cadastro/login simples de cliente.
 - Ocasioes especiais cadastraveis no admin.
 - Perguntas dinamicas cadastraveis no admin.
@@ -91,11 +92,13 @@ Depois do deploy:
 - Cockpit administrativo com indicadores, agenda e acoes de aprovacao/confirmacao.
 - Cadastro de ambientes.
 - Cadastro visual de mesas por ambiente com posicao `x/y` salva em banco.
+- Link de WhatsApp com mensagem pronta para o restaurante selecionado ao final da reserva.
 
 ## Proximos incrementos sugeridos
 
 - Bloqueio automatico por capacidade e disponibilidade real.
 - SMTP autenticado.
+- Integracao com WhatsApp Business API para envio automatico sem acao manual do cliente.
 - Politicas detalhadas de cancelamento/no-show.
 - Editor visual mais avancado para plantas de salao.
 - Multi-restaurante/multiunidade.

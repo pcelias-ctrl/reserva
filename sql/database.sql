@@ -19,6 +19,21 @@ CREATE TABLE customers (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE restaurants (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(180) NOT NULL,
+  legal_name VARCHAR(180) NULL,
+  document_number VARCHAR(40) NULL,
+  email VARCHAR(160) NULL,
+  phone VARCHAR(40) NULL,
+  whatsapp VARCHAR(40) NOT NULL,
+  logo_url VARCHAR(500) NULL,
+  address TEXT NULL,
+  reservation_message TEXT NULL,
+  status ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE occasions (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
@@ -40,12 +55,15 @@ CREATE TABLE questionnaire_questions (
 
 CREATE TABLE environments (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  restaurant_id INT NOT NULL,
   name VARCHAR(120) NOT NULL,
   description TEXT NULL,
   width INT NOT NULL DEFAULT 960,
   height INT NOT NULL DEFAULT 520,
   status ENUM('active','inactive') NOT NULL DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  ,
+  CONSTRAINT fk_environment_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE tables_map (
@@ -63,6 +81,7 @@ CREATE TABLE tables_map (
 
 CREATE TABLE reservations (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  restaurant_id INT NOT NULL,
   customer_id INT NULL,
   occasion_id INT NULL,
   environment_id INT NULL,
@@ -82,6 +101,7 @@ CREATE TABLE reservations (
   status ENUM('pending','approved','confirmed','seated','completed','cancelled','no_show') NOT NULL DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_reservation_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
   CONSTRAINT fk_reservation_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
   CONSTRAINT fk_reservation_occasion FOREIGN KEY (occasion_id) REFERENCES occasions(id) ON DELETE SET NULL,
   CONSTRAINT fk_reservation_environment FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE SET NULL,
@@ -102,6 +122,9 @@ INSERT INTO admins (name, email, password_hash) VALUES
 ('Administrador', 'admin@reserva.local', '$2y$10$sLnDifVi7C85VdlAZSAcBeRs3pLEciKHDMzrt2lsN4uQHJt.UZ2Fy'),
 ('Administrador', 'admin@admin.com', '$2y$10$sLnDifVi7C85VdlAZSAcBeRs3pLEciKHDMzrt2lsN4uQHJt.UZ2Fy');
 
+INSERT INTO restaurants (name, legal_name, email, phone, whatsapp, logo_url, address, reservation_message) VALUES
+('Restaurante Demo', 'Restaurante Demo Ltda', 'reservas@restaurantedemo.com', '(11) 99999-9999', '5511999999999', '', 'Rua das Reservas, 100', 'Nova reserva recebida pelo Reserva On-line.');
+
 INSERT INTO occasions (name, asks_birthday) VALUES
 ('Aniversario', 1),
 ('Reuniao de negocios', 0),
@@ -112,9 +135,9 @@ INSERT INTO questionnaire_questions (label, field_type, options_text, is_require
 ('Alguma restricao alimentar especifica?', 'textarea', NULL, 0, 10),
 ('Prefere ambiente interno ou externo?', 'select', 'Interno\nExterno\nSem preferencia', 0, 20);
 
-INSERT INTO environments (name, description, width, height) VALUES
-('Salao principal', 'Ambiente interno principal', 960, 520),
-('Varanda', 'Area externa coberta', 760, 420);
+INSERT INTO environments (restaurant_id, name, description, width, height) VALUES
+(1, 'Salao principal', 'Ambiente interno principal', 960, 520),
+(1, 'Varanda', 'Area externa coberta', 760, 420);
 
 INSERT INTO tables_map (environment_id, label, shape, seats, position_x, position_y) VALUES
 (1, 'M01', 'square', 2, 80, 80),

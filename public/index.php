@@ -5,15 +5,16 @@ require_once __DIR__ . '/../includes/header.php';
 
 $occasions = $pdo->query("SELECT * FROM occasions WHERE status = 'active' ORDER BY name")->fetchAll();
 $questions = $pdo->query("SELECT * FROM questionnaire_questions WHERE status = 'active' ORDER BY sort_order, id")->fetchAll();
-$environments = $pdo->query("SELECT * FROM environments WHERE status = 'active' ORDER BY name")->fetchAll();
+$restaurants = $pdo->query("SELECT * FROM restaurants WHERE status = 'active' ORDER BY name")->fetchAll();
+$environments = $pdo->query("SELECT e.*, r.name restaurant_name FROM environments e INNER JOIN restaurants r ON r.id = e.restaurant_id WHERE e.status = 'active' AND r.status = 'active' ORDER BY r.name, e.name")->fetchAll();
 $customer = current_customer();
 ?>
 
 <section class="hero">
     <div>
         <p class="eyebrow">Reserva inteligente</p>
-        <h1>Escolha data, horario e conte o que o restaurante precisa saber.</h1>
-        <p>Voce pode reservar sem login ou entrar para acompanhar suas reservas.</p>
+        <h1>Reserve sua mesa com confirmacao direta pelo restaurante.</h1>
+        <p>Escolha o restaurante, informe data, horario e preferencias. Ao finalizar, os dados ficam prontos para envio por WhatsApp.</p>
     </div>
     <div class="hero-panel">
         <strong>Status rapido</strong>
@@ -28,6 +29,24 @@ $customer = current_customer();
 
     <section class="panel">
         <h2>Dados da reserva</h2>
+        <div class="restaurant-choice">
+            <?php foreach ($restaurants as $index => $restaurant): ?>
+                <label class="restaurant-option">
+                    <input type="radio" name="restaurant_id" value="<?php echo (int)$restaurant['id']; ?>" <?php echo $index === 0 ? 'checked' : ''; ?> required>
+                    <span class="restaurant-logo small">
+                        <?php if (!empty($restaurant['logo_url'])): ?>
+                            <img src="<?php echo e($restaurant['logo_url']); ?>" alt="<?php echo e($restaurant['name']); ?>">
+                        <?php else: ?>
+                            <strong><?php echo e(substr($restaurant['name'], 0, 1)); ?></strong>
+                        <?php endif; ?>
+                    </span>
+                    <span>
+                        <strong><?php echo e($restaurant['name']); ?></strong>
+                        <em><?php echo e($restaurant['address']); ?></em>
+                    </span>
+                </label>
+            <?php endforeach; ?>
+        </div>
         <div class="grid two">
             <label>Data
                 <input type="date" name="reservation_date" required min="<?php echo date('Y-m-d'); ?>">
@@ -42,7 +61,9 @@ $customer = current_customer();
                 <select name="environment_id">
                     <option value="">Sem preferencia</option>
                     <?php foreach ($environments as $environment): ?>
-                        <option value="<?php echo (int)$environment['id']; ?>"><?php echo e($environment['name']); ?></option>
+                        <option value="<?php echo (int)$environment['id']; ?>" data-restaurant="<?php echo (int)$environment['restaurant_id']; ?>">
+                            <?php echo e($environment['restaurant_name'] . ' - ' . $environment['name']); ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
             </label>

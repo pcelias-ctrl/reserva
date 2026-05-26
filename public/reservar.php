@@ -23,14 +23,23 @@ if (!$customerId && !empty($_POST['customer_password'])) {
 }
 
 $occasionId = !empty($_POST['occasion_id']) ? (int)$_POST['occasion_id'] : null;
+$restaurantId = !empty($_POST['restaurant_id']) ? (int)$_POST['restaurant_id'] : 0;
 $environmentId = !empty($_POST['environment_id']) ? (int)$_POST['environment_id'] : null;
+
+$stmt = $pdo->prepare("SELECT id FROM restaurants WHERE id = ? AND status = 'active'");
+$stmt->execute(array($restaurantId));
+if (!$stmt->fetch()) {
+    flash('error', 'Selecione um restaurante valido.');
+    redirect_to('index.php');
+}
 
 $stmt = $pdo->prepare(
     'INSERT INTO reservations
-    (customer_id, occasion_id, environment_id, customer_name, customer_email, customer_phone, reservation_date, reservation_time, party_size, birthday_day, birthday_month, dietary_restrictions, notes, lgpd_terms_consent, lgpd_share_consent)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    (restaurant_id, customer_id, occasion_id, environment_id, customer_name, customer_email, customer_phone, reservation_date, reservation_time, party_size, birthday_day, birthday_month, dietary_restrictions, notes, lgpd_terms_consent, lgpd_share_consent)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 $stmt->execute(array(
+    $restaurantId,
     $customerId,
     $occasionId,
     $environmentId,
@@ -67,10 +76,11 @@ if (!empty($_POST['answers']) && is_array($_POST['answers'])) {
     }
 }
 
-$stmt = $pdo->prepare("SELECT r.*, COALESCE(o.name, 'Nenhuma') AS occasion_name FROM reservations r LEFT JOIN occasions o ON o.id = r.occasion_id WHERE r.id = ?");
+$stmt = $pdo->prepare("SELECT r.*, COALESCE(o.name, 'Nenhuma') AS occasion_name, rest.name restaurant_name, rest.whatsapp restaurant_whatsapp, rest.reservation_message FROM reservations r INNER JOIN restaurants rest ON rest.id = r.restaurant_id LEFT JOIN occasions o ON o.id = r.occasion_id WHERE r.id = ?");
 $stmt->execute(array($reservationId));
 $reservation = $stmt->fetch();
 notify_reservation_created($reservation, $answerLabels);
 
+$_SESSION['last_whatsapp_url'] = build_whatsapp_url($reservation['restaurant_whatsapp'], reservation_whatsapp_message($reservation));
 flash('success', 'Reserva enviada. O restaurante vai analisar e confirmar por email.');
 redirect_to('obrigado.php?id=' . $reservationId);

@@ -28,8 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/../includes/header.php';
 
 $filter = isset($_GET['status']) ? $_GET['status'] : '';
-$sql = "SELECT r.*, COALESCE(o.name, 'Nenhuma') occasion_name, COALESCE(e.name, 'Sem preferencia') environment_name, COALESCE(t.label, '-') table_label
+$sql = "SELECT r.*, rest.name restaurant_name, rest.whatsapp restaurant_whatsapp, COALESCE(o.name, 'Nenhuma') occasion_name, COALESCE(e.name, 'Sem preferencia') environment_name, COALESCE(t.label, '-') table_label
         FROM reservations r
+        INNER JOIN restaurants rest ON rest.id = r.restaurant_id
         LEFT JOIN occasions o ON o.id = r.occasion_id
         LEFT JOIN environments e ON e.id = r.environment_id
         LEFT JOIN tables_map t ON t.id = r.table_id";
@@ -59,7 +60,7 @@ $reservations = $stmt->fetchAll();
                     <h2><?php echo e($reservation['customer_name']); ?></h2>
                     <p><?php echo e(date('d/m/Y', strtotime($reservation['reservation_date']))); ?> as <?php echo e(substr($reservation['reservation_time'], 0, 5)); ?> · <?php echo (int)$reservation['party_size']; ?> pessoas</p>
                     <p><?php echo e($reservation['customer_email']); ?> · <?php echo e($reservation['customer_phone']); ?></p>
-                    <p><?php echo e($reservation['environment_name']); ?> · mesa <?php echo e($reservation['table_label']); ?> · <?php echo e($reservation['occasion_name']); ?></p>
+                    <p><?php echo e($reservation['restaurant_name']); ?> · <?php echo e($reservation['environment_name']); ?> · mesa <?php echo e($reservation['table_label']); ?> · <?php echo e($reservation['occasion_name']); ?></p>
                     <?php if ($reservation['dietary_restrictions']): ?><p><strong>Restricoes:</strong> <?php echo e($reservation['dietary_restrictions']); ?></p><?php endif; ?>
                     <?php if ($reservation['notes']): ?><p><strong>Observacoes:</strong> <?php echo e($reservation['notes']); ?></p><?php endif; ?>
                 </div>
@@ -72,6 +73,7 @@ $reservations = $stmt->fetchAll();
                         <?php endforeach; ?>
                     </select>
                     <button class="button primary" type="submit">Salvar</button>
+                    <a class="button whatsapp" target="_blank" rel="noopener" href="<?php echo e(build_whatsapp_url($reservation['restaurant_whatsapp'], reservation_whatsapp_message($reservation))); ?>">WhatsApp</a>
                 </form>
             </article>
         <?php endforeach; ?>

@@ -25,6 +25,9 @@ function notify_reservation_created($reservation, $answers)
 
     $lines = array();
     $lines[] = 'Nova reserva recebida';
+    if (!empty($reservation['restaurant_name'])) {
+        $lines[] = 'Restaurante: ' . $reservation['restaurant_name'];
+    }
     $lines[] = 'Cliente: ' . $reservation['customer_name'];
     $lines[] = 'Email: ' . $reservation['customer_email'];
     $lines[] = 'Telefone: ' . $reservation['customer_phone'];

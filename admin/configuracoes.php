@@ -22,8 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'environment') {
-        $stmt = $pdo->prepare('INSERT INTO environments (name, description, width, height) VALUES (?, ?, ?, ?)');
-        $stmt->execute(array(trim($_POST['name']), trim($_POST['description']), (int)$_POST['width'], (int)$_POST['height']));
+        $stmt = $pdo->prepare('INSERT INTO environments (restaurant_id, name, description, width, height) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute(array((int)$_POST['restaurant_id'], trim($_POST['name']), trim($_POST['description']), (int)$_POST['width'], (int)$_POST['height']));
         flash('success', 'Ambiente cadastrado.');
     }
 
@@ -48,7 +48,8 @@ require_once __DIR__ . '/../includes/header.php';
 
 $occasions = $pdo->query('SELECT * FROM occasions ORDER BY status, name')->fetchAll();
 $questions = $pdo->query('SELECT * FROM questionnaire_questions ORDER BY sort_order, id')->fetchAll();
-$environments = $pdo->query('SELECT * FROM environments ORDER BY name')->fetchAll();
+$restaurants = $pdo->query("SELECT * FROM restaurants WHERE status = 'active' ORDER BY name")->fetchAll();
+$environments = $pdo->query('SELECT e.*, r.name restaurant_name FROM environments e INNER JOIN restaurants r ON r.id = e.restaurant_id ORDER BY r.name, e.name')->fetchAll();
 $selectedEnvironmentId = isset($_GET['environment_id']) ? (int)$_GET['environment_id'] : (isset($environments[0]) ? (int)$environments[0]['id'] : 0);
 $tables = array();
 $selectedEnvironment = null;
@@ -113,7 +114,7 @@ if ($selectedEnvironmentId) {
         <form method="get" class="inline-form">
             <select name="environment_id" onchange="this.form.submit()">
                 <?php foreach ($environments as $environment): ?>
-                    <option value="<?php echo (int)$environment['id']; ?>" <?php echo $selectedEnvironmentId === (int)$environment['id'] ? 'selected' : ''; ?>><?php echo e($environment['name']); ?></option>
+                    <option value="<?php echo (int)$environment['id']; ?>" <?php echo $selectedEnvironmentId === (int)$environment['id'] ? 'selected' : ''; ?>><?php echo e($environment['restaurant_name'] . ' - ' . $environment['name']); ?></option>
                 <?php endforeach; ?>
             </select>
         </form>
@@ -124,6 +125,13 @@ if ($selectedEnvironmentId) {
             <h3>Novo ambiente</h3>
             <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
             <input type="hidden" name="action" value="environment">
+            <label>Restaurante
+                <select name="restaurant_id" required>
+                    <?php foreach ($restaurants as $restaurant): ?>
+                        <option value="<?php echo (int)$restaurant['id']; ?>"><?php echo e($restaurant['name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
             <label>Nome <input type="text" name="name" required></label>
             <label>Descricao <textarea name="description" rows="2"></textarea></label>
             <div class="grid two">

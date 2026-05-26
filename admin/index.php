@@ -20,7 +20,7 @@ foreach ($cards as $status => $label) {
 }
 
 $today = date('Y-m-d');
-$stmt = $pdo->prepare("SELECT r.*, COALESCE(o.name, 'Nenhuma') occasion_name, COALESCE(e.name, 'Sem preferencia') environment_name FROM reservations r LEFT JOIN occasions o ON o.id = r.occasion_id LEFT JOIN environments e ON e.id = r.environment_id WHERE r.reservation_date >= ? ORDER BY r.reservation_date, r.reservation_time LIMIT 12");
+$stmt = $pdo->prepare("SELECT r.*, rest.name restaurant_name, COALESCE(o.name, 'Nenhuma') occasion_name, COALESCE(e.name, 'Sem preferencia') environment_name FROM reservations r INNER JOIN restaurants rest ON rest.id = r.restaurant_id LEFT JOIN occasions o ON o.id = r.occasion_id LEFT JOIN environments e ON e.id = r.environment_id WHERE r.reservation_date >= ? ORDER BY r.reservation_date, r.reservation_time LIMIT 12");
 $stmt->execute(array($today));
 $agenda = $stmt->fetchAll();
 ?>
@@ -46,12 +46,13 @@ $agenda = $stmt->fetchAll();
     <div class="table-wrap">
         <table>
             <thead>
-                <tr><th>Quando</th><th>Cliente</th><th>Pessoas</th><th>Ambiente</th><th>Ocasiao</th><th>Status</th><th></th></tr>
+                <tr><th>Quando</th><th>Restaurante</th><th>Cliente</th><th>Pessoas</th><th>Ambiente</th><th>Ocasiao</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
             <?php foreach ($agenda as $reservation): ?>
                 <tr>
                     <td><?php echo e(date('d/m/Y', strtotime($reservation['reservation_date'])) . ' ' . substr($reservation['reservation_time'], 0, 5)); ?></td>
+                    <td><?php echo e($reservation['restaurant_name']); ?></td>
                     <td><?php echo e($reservation['customer_name']); ?><small><?php echo e($reservation['customer_phone']); ?></small></td>
                     <td><?php echo (int)$reservation['party_size']; ?></td>
                     <td><?php echo e($reservation['environment_name']); ?></td>

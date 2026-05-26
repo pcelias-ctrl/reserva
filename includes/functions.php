@@ -65,3 +65,41 @@ function redirect_to($path)
     header('Location: ' . $path);
     exit;
 }
+
+function only_digits($value)
+{
+    return preg_replace('/\D+/', '', (string)$value);
+}
+
+function build_whatsapp_url($phone, $message)
+{
+    $digits = only_digits($phone);
+    if ($digits === '') {
+        return '';
+    }
+    return 'https://wa.me/' . $digits . '?text=' . rawurlencode($message);
+}
+
+function reservation_whatsapp_message($reservation)
+{
+    $lines = array(
+        'Nova reserva pelo Reserva On-line',
+        'Restaurante: ' . $reservation['restaurant_name'],
+        'Cliente: ' . $reservation['customer_name'],
+        'Telefone: ' . $reservation['customer_phone'],
+        'Email: ' . $reservation['customer_email'],
+        'Data: ' . date('d/m/Y', strtotime($reservation['reservation_date'])),
+        'Horario: ' . substr($reservation['reservation_time'], 0, 5),
+        'Pessoas: ' . $reservation['party_size'],
+        'Ocasiao: ' . $reservation['occasion_name']
+    );
+
+    if (!empty($reservation['dietary_restrictions'])) {
+        $lines[] = 'Restricoes: ' . $reservation['dietary_restrictions'];
+    }
+    if (!empty($reservation['notes'])) {
+        $lines[] = 'Observacoes: ' . $reservation['notes'];
+    }
+
+    return implode("\n", $lines);
+}
