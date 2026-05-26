@@ -9,7 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare('SELECT * FROM admins WHERE email = ?');
     $stmt->execute(array(trim($_POST['email'])));
     $admin = $stmt->fetch();
-    if ($admin && password_verify($_POST['password'], $admin['password_hash'])) {
+    $password = trim($_POST['password']);
+    if ($admin && password_verify($password, $admin['password_hash'])) {
         $_SESSION['admin'] = array('id' => (int)$admin['id'], 'name' => $admin['name'], 'email' => $admin['email']);
         redirect_to('index.php');
     }
