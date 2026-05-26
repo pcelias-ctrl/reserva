@@ -99,7 +99,7 @@ CREATE TABLE reservation_answers (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO admins (name, email, password_hash) VALUES
-('Administrador', 'admin@reserva.local', '$2y$10$9zU8AvWZNS8rBGC1VY9ROO1RGF1BZLqCD1zPzDxNqwHXzZcOVJ6py');
+('Administrador', 'admin@reserva.local', '$2y$10$sLnDifVi7C85VdlAZSAcBeRs3pLEciKHDMzrt2lsN4uQHJt.UZ2Fy');
 
 INSERT INTO occasions (name, asks_birthday) VALUES
 ('Aniversario', 1),
