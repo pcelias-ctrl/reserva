@@ -1,0 +1,11 @@
+{
+  "name": "pcelias-ctrl/reserva",
+  "description": "Sistema de reservas on-line para restaurantes.",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.0",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*"
+  }
+}

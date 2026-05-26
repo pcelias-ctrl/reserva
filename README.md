@@ -6,7 +6,7 @@ aprovacao de reservas, perguntas dinamicas, ocasioes, ambientes e layout de mesa
 
 ## Requisitos
 
-- PHP 7.2+
+- PHP 8.0+
 - MySQL 5.7+ ou MariaDB equivalente
 - Servidor web apontando para a pasta `public`
 
@@ -30,6 +30,19 @@ MAIL_ADMIN_TO=admin@seudominio.com
 
 - Cliente: `/public/index.php`
 - Admin: `/admin/login.php`
+
+Opcional com PHP embutido:
+
+```bash
+php -S localhost:8080 -t public
+```
+
+Opcional com Docker:
+
+```bash
+docker build -t reserva-online .
+docker run --rm -p 8080:80 --env DB_HOST=host.docker.internal reserva-online
+```
 
 Login inicial do administrador:
 
