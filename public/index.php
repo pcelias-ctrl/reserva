@@ -17,10 +17,10 @@ $customer = current_customer();
         <p>Escolha o restaurante, informe data, horario e preferencias. Ao finalizar, os dados ficam prontos para envio por WhatsApp.</p>
     </div>
     <div class="hero-panel">
-        <strong>Status rapido</strong>
-        <span>Confirmacao por email</span>
-        <span>Perguntas personalizadas</span>
-        <span>Consentimento LGPD</span>
+        <strong>Sua mesa, sem espera</strong>
+        <span>Reserva enviada direto ao restaurante</span>
+        <span>Atendimento preparado antes da chegada</span>
+        <span>Confirmacao rapida pelo WhatsApp</span>
     </div>
 </section>
 
