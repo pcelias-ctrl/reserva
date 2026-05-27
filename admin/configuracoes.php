@@ -84,68 +84,52 @@ if ($selectedEnvironmentId) {
     $tables = $stmt->fetchAll();
 }
 ?>
-<section class="settings-grid">
-    <div class="panel">
-        <h2>Ocasioes</h2>
-        <form method="post">
-            <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
-            <input type="hidden" name="action" value="occasion">
-            <label>Nome <input type="text" name="name" required placeholder="Aniversario, celebracao..."></label>
-            <label class="check"><input type="checkbox" name="asks_birthday" value="1"> Solicitar dia e mes do aniversario</label>
-            <button class="button primary" type="submit">Adicionar</button>
-        </form>
-        <ul class="compact-list">
-            <?php foreach ($occasions as $occasion): ?>
-                <li><?php echo e($occasion['name']); ?><?php echo $occasion['asks_birthday'] ? ' · aniversario' : ''; ?></li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-
-    <div class="panel">
-        <h2>Questionario</h2>
-        <form method="post">
-            <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
-            <input type="hidden" name="action" value="question">
-            <label>Pergunta <input type="text" name="label" required></label>
-            <div class="grid two">
-                <label>Tipo
-                    <select name="field_type">
-                        <option value="text">Texto curto</option>
-                        <option value="textarea">Texto longo</option>
-                        <option value="select">Selecao</option>
-                        <option value="checkbox">Sim/Nao</option>
-                    </select>
-                </label>
-                <label>Ordem <input type="number" name="sort_order" value="0"></label>
-            </div>
-            <label>Opcoes para selecao <textarea name="options_text" rows="3" placeholder="Uma opcao por linha"></textarea></label>
-            <label class="check"><input type="checkbox" name="is_required" value="1"> Obrigatoria</label>
-            <button class="button primary" type="submit">Adicionar</button>
-        </form>
-        <ul class="compact-list">
-            <?php foreach ($questions as $question): ?>
-                <li><?php echo e($question['label']); ?> · <?php echo e($question['field_type']); ?></li>
-            <?php endforeach; ?>
-        </ul>
+<section class="dashboard-hero compact-hero">
+    <div>
+        <p class="eyebrow">Configuracoes</p>
+        <h1>Organize questionarios, ocasioes e o mapa de mesas.</h1>
     </div>
 </section>
 
-<section class="panel">
+<section class="config-tabs">
+    <a href="#layout">Layout de mesas</a>
+    <a href="#questionario">Questionario</a>
+    <a href="#ocasioes">Ocasioes</a>
+</section>
+
+<section class="panel layout-console" id="layout">
     <div class="section-title">
-        <h2>Ambientes e layout de mesas</h2>
-        <form method="get" class="inline-form">
-            <select name="environment_id" onchange="this.form.submit()">
-                <?php foreach ($environments as $environment): ?>
-                    <option value="<?php echo (int)$environment['id']; ?>" <?php echo $selectedEnvironmentId === (int)$environment['id'] ? 'selected' : ''; ?>><?php echo e($environment['restaurant_name'] . ' - ' . $environment['name']); ?></option>
-                <?php endforeach; ?>
-            </select>
+        <div>
+            <p class="eyebrow">Mapa operacional</p>
+            <h2>Ambientes e mesas</h2>
+            <?php if ($selectedEnvironment): ?>
+                <p class="muted-line"><?php echo e($selectedEnvironment['restaurant_name']); ?> - <?php echo e($selectedEnvironment['name']); ?></p>
+            <?php endif; ?>
+        </div>
+        <form method="get" class="inline-form environment-switcher">
+            <label>Ambiente
+                <select name="environment_id" onchange="this.form.submit()">
+                    <?php foreach ($environments as $environment): ?>
+                        <option value="<?php echo (int)$environment['id']; ?>" <?php echo $selectedEnvironmentId === (int)$environment['id'] ? 'selected' : ''; ?>><?php echo e($environment['restaurant_name'] . ' - ' . $environment['name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
         </form>
     </div>
 
-    <div class="settings-grid">
+    <?php if ($selectedEnvironment): ?>
+        <div class="layout-summary">
+            <div><span>Restaurante</span><strong><?php echo e($selectedEnvironment['restaurant_name']); ?></strong></div>
+            <div><span>Ambiente</span><strong><?php echo e($selectedEnvironment['name']); ?></strong></div>
+            <div><span>Mesas</span><strong><?php echo count($tables); ?></strong></div>
+            <div><span>Dimensao</span><strong><?php echo (int)$selectedEnvironment['width']; ?> x <?php echo (int)$selectedEnvironment['height']; ?></strong></div>
+        </div>
+    <?php endif; ?>
+
+    <div class="settings-grid layout-actions">
         <?php if ($selectedEnvironment): ?>
-            <form method="post">
-                <h3>Editar ambiente selecionado</h3>
+            <form method="post" class="config-card">
+                <div class="card-heading"><span>01</span><h3>Editar ambiente</h3></div>
                 <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
                 <input type="hidden" name="action" value="update_environment">
                 <input type="hidden" name="environment_id" value="<?php echo (int)$selectedEnvironment['id']; ?>">
@@ -172,8 +156,8 @@ if ($selectedEnvironmentId) {
             </form>
         <?php endif; ?>
 
-        <form method="post">
-            <h3>Novo ambiente</h3>
+        <form method="post" class="config-card">
+            <div class="card-heading"><span>02</span><h3>Novo ambiente</h3></div>
             <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
             <input type="hidden" name="action" value="environment">
             <label>Restaurante
@@ -192,8 +176,8 @@ if ($selectedEnvironmentId) {
             <button class="button primary" type="submit">Criar ambiente</button>
         </form>
 
-        <form method="post">
-            <h3>Nova mesa</h3>
+        <form method="post" class="config-card accent-card">
+            <div class="card-heading"><span>03</span><h3>Nova mesa</h3></div>
             <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
             <input type="hidden" name="action" value="table">
             <input type="hidden" name="environment_id" value="<?php echo (int)$selectedEnvironmentId; ?>">
@@ -212,6 +196,12 @@ if ($selectedEnvironmentId) {
     </div>
 
     <?php if ($selectedEnvironment): ?>
+        <div class="map-heading">
+            <div>
+                <h3>Editor visual do salao</h3>
+                <p class="muted-line">Arraste as mesas para reposicionar. A posicao e salva automaticamente.</p>
+            </div>
+        </div>
         <div class="floor-map" data-save-url="configuracoes.php" data-csrf="<?php echo e(csrf_token()); ?>" style="width: <?php echo (int)$selectedEnvironment['width']; ?>px; height: <?php echo (int)$selectedEnvironment['height']; ?>px;">
             <?php foreach ($tables as $table): ?>
                 <button class="map-table <?php echo e($table['shape']); ?> <?php echo $table['status'] === 'inactive' ? 'inactive' : ''; ?>" data-id="<?php echo (int)$table['id']; ?>" style="left: <?php echo (int)$table['position_x']; ?>px; top: <?php echo (int)$table['position_y']; ?>px;">
@@ -221,10 +211,19 @@ if ($selectedEnvironmentId) {
             <?php endforeach; ?>
         </div>
 
+        <div class="section-title table-editor-title">
+            <div>
+                <p class="eyebrow">Cadastro fino</p>
+                <h2>Editar mesas cadastradas</h2>
+            </div>
+        </div>
         <div class="table-editor-grid">
             <?php foreach ($tables as $table): ?>
                 <form method="post" class="table-editor-card">
-                    <h3>Mesa <?php echo e($table['label']); ?></h3>
+                    <div class="table-card-title">
+                        <h3>Mesa <?php echo e($table['label']); ?></h3>
+                        <span class="badge"><?php echo (int)$table['seats']; ?> lugares</span>
+                    </div>
                     <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
                     <input type="hidden" name="action" value="update_table">
                     <input type="hidden" name="environment_id" value="<?php echo (int)$selectedEnvironment['id']; ?>">
@@ -250,6 +249,52 @@ if ($selectedEnvironmentId) {
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
+</section>
+
+<section class="settings-grid" id="questionario">
+    <div class="panel">
+        <div class="section-title"><div><p class="eyebrow">Experiencia do cliente</p><h2>Questionario</h2></div></div>
+        <form method="post" class="config-form">
+            <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+            <input type="hidden" name="action" value="question">
+            <label>Pergunta <input type="text" name="label" required></label>
+            <div class="grid two">
+                <label>Tipo
+                    <select name="field_type">
+                        <option value="text">Texto curto</option>
+                        <option value="textarea">Texto longo</option>
+                        <option value="select">Selecao</option>
+                        <option value="checkbox">Sim/Nao</option>
+                    </select>
+                </label>
+                <label>Ordem <input type="number" name="sort_order" value="0"></label>
+            </div>
+            <label>Opcoes para selecao <textarea name="options_text" rows="3" placeholder="Uma opcao por linha"></textarea></label>
+            <label class="check"><input type="checkbox" name="is_required" value="1"> Obrigatoria</label>
+            <button class="button primary" type="submit">Adicionar pergunta</button>
+        </form>
+        <div class="pill-list">
+            <?php foreach ($questions as $question): ?>
+                <span><?php echo e($question['label']); ?> - <?php echo e($question['field_type']); ?></span>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
+    <div class="panel" id="ocasioes">
+        <div class="section-title"><div><p class="eyebrow">Momentos especiais</p><h2>Ocasioes</h2></div></div>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+            <input type="hidden" name="action" value="occasion">
+            <label>Nome <input type="text" name="name" required placeholder="Aniversario, celebracao..."></label>
+            <label class="check"><input type="checkbox" name="asks_birthday" value="1"> Solicitar dia e mes do aniversario</label>
+            <button class="button primary" type="submit">Adicionar ocasiao</button>
+        </form>
+        <div class="pill-list">
+            <?php foreach ($occasions as $occasion): ?>
+                <span><?php echo e($occasion['name']); ?><?php echo $occasion['asks_birthday'] ? ' - aniversario' : ''; ?></span>
+            <?php endforeach; ?>
+        </div>
+    </div>
 </section>
 <script src="../assets/js/admin.js"></script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

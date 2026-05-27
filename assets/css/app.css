@@ -497,6 +497,115 @@ td small {
     gap: 10px;
 }
 
+.config-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.config-tabs a {
+    background: #fff;
+    border: 1px solid rgba(8, 83, 77, 0.12);
+    border-radius: 999px;
+    color: var(--primary-dark);
+    font-size: 14px;
+    font-weight: 800;
+    padding: 10px 14px;
+}
+
+.layout-console {
+    overflow: hidden;
+}
+
+.muted-line {
+    color: var(--muted);
+    margin: 4px 0 0;
+}
+
+.environment-switcher label {
+    margin: 0;
+    min-width: 320px;
+}
+
+.layout-summary {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 18px;
+}
+
+.layout-summary div {
+    background: linear-gradient(180deg, #fff, #fff8ef);
+    border: 1px solid rgba(8, 83, 77, 0.1);
+    border-radius: 16px;
+    padding: 14px;
+}
+
+.layout-summary span {
+    color: var(--muted);
+    display: block;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.layout-summary strong {
+    color: var(--primary-dark);
+    display: block;
+    font-size: 18px;
+    margin-top: 4px;
+}
+
+.layout-actions {
+    align-items: start;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.config-card {
+    background: linear-gradient(180deg, #fff, #fbfdfa);
+    border: 1px solid rgba(8, 83, 77, 0.1);
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(16, 32, 29, 0.05);
+    padding: 18px;
+}
+
+.accent-card {
+    background: linear-gradient(180deg, #fffaf5, #eefbf5);
+}
+
+.card-heading {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.card-heading span {
+    align-items: center;
+    background: var(--primary-soft);
+    border-radius: 12px;
+    color: var(--primary-dark);
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 900;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
+}
+
+.card-heading h3,
+.map-heading h3 {
+    margin: 0;
+}
+
+.map-heading {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 22px;
+}
+
 .filters a {
     background: #fff;
     border: 1px solid rgba(8, 83, 77, 0.12);
@@ -554,6 +663,38 @@ td small {
 
 .table-editor-card h3 {
     margin-top: 0;
+}
+
+.table-editor-title {
+    margin-top: 24px;
+}
+
+.table-card-title {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.table-card-title h3 {
+    margin: 0;
+}
+
+.pill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.pill-list span {
+    background: var(--primary-soft);
+    border-radius: 999px;
+    color: var(--primary-dark);
+    font-size: 13px;
+    font-weight: 800;
+    padding: 8px 10px;
 }
 
 .compact-list {
@@ -714,6 +855,8 @@ td small {
     .dashboard-hero,
     .grid.two,
     .settings-grid,
+    .layout-actions,
+    .layout-summary,
     .reservation-card,
     .metric-grid,
     .restaurant-choice,
@@ -834,6 +977,12 @@ td small {
     .section-title {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .environment-switcher,
+    .environment-switcher label {
+        width: 100%;
+        min-width: 0;
     }
 
     .floor-map {
