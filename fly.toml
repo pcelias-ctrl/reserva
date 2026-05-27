@@ -5,14 +5,14 @@ primary_region = 'gru'
   dockerfile = 'Dockerfile'
 
 [env]
-  APP_NAME = 'i_Reserva'
+  APP_NAME = 'i-Reserva'
   APP_URL = 'https://reserva-online-pcelias.fly.dev'
   DB_HOST = 'reserva-online-mysql-pcelias.internal'
   DB_NAME = 'reserva_online'
   DB_PORT = '3306'
   DB_USER = 'reserva_user'
   MAIL_FROM = 'reservas@localhost'
-  MAIL_FROM_NAME = 'i_Reserva'
+  MAIL_FROM_NAME = 'i-Reserva'
 
 [http_service]
   internal_port = 80

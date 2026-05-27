@@ -24,7 +24,7 @@ function notify_reservation_created($reservation, $answers)
     global $MAIL_ADMIN_TO;
 
     $lines = array();
-    $lines[] = 'Nova reserva recebida pelo i_Reserva';
+    $lines[] = 'Nova reserva recebida pelo i-Reserva';
     if (!empty($reservation['restaurant_name'])) {
         $lines[] = 'Restaurante: ' . $reservation['restaurant_name'];
     }

@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
-$title = isset($title) ? $title : 'i_Reserva';
+$title = isset($title) ? $title : 'i-Reserva';
 $isAdmin = isset($isAdmin) ? $isAdmin : false;
 ?>
 <!doctype html>
@@ -14,8 +14,8 @@ $isAdmin = isset($isAdmin) ? $isAdmin : false;
 </head>
 <body class="<?php echo $isAdmin ? 'admin-shell' : 'public-shell'; ?>">
 <header class="topbar">
-    <a class="brand" href="<?php echo $isAdmin ? 'index.php' : 'index.php'; ?>" aria-label="i_Reserva">
-        <img src="../assets/img/logo-ireserva.svg" alt="i_Reserva">
+    <a class="brand" href="<?php echo $isAdmin ? 'index.php' : 'index.php'; ?>" aria-label="i-Reserva">
+        <img src="../assets/img/logo-ireserva.svg" alt="i-Reserva">
     </a>
     <nav>
         <?php if ($isAdmin): ?>
