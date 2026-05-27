@@ -23,6 +23,7 @@ $isAdmin = isset($isAdmin) ? $isAdmin : false;
             <a href="reservas.php">Reservas</a>
             <a href="restaurantes.php">Restaurantes</a>
             <a href="configuracoes.php">Configurações</a>
+            <a href="manutencao.php">Manutenção</a>
             <a href="logout.php">Sair</a>
         <?php else: ?>
             <a href="index.php">Reservar</a>

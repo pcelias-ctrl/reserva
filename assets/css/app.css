@@ -519,6 +519,40 @@ td small {
     padding-top: 14px;
 }
 
+.maintenance-list {
+    border: 1px solid rgba(8, 83, 77, 0.12);
+    border-radius: 16px;
+    display: grid;
+    margin-bottom: 14px;
+    max-height: 520px;
+    overflow: auto;
+}
+
+.maintenance-row {
+    align-items: center;
+    border-bottom: 1px solid rgba(8, 83, 77, 0.08);
+    display: grid;
+    gap: 10px;
+    grid-template-columns: auto 1fr;
+    margin: 0;
+    padding: 12px;
+}
+
+.maintenance-row:last-child {
+    border-bottom: 0;
+}
+
+.maintenance-row strong,
+.maintenance-row em {
+    display: block;
+}
+
+.maintenance-row em {
+    color: var(--muted);
+    font-style: normal;
+    font-weight: 600;
+}
+
 .metric span {
     color: var(--muted);
     display: block;

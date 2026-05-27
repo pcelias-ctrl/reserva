@@ -14,11 +14,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (in_array($status, $allowed, true)) {
         $stmt = $pdo->prepare('UPDATE reservations SET status = ? WHERE id = ?');
         $stmt->execute(array($status, $id));
-        $stmt = $pdo->prepare('SELECT r.*, rest.smtp_enabled, rest.smtp_host, rest.smtp_port, rest.smtp_username, rest.smtp_password, rest.smtp_encryption, rest.smtp_from_email, rest.smtp_from_name FROM reservations r INNER JOIN restaurants rest ON rest.id = r.restaurant_id WHERE r.id = ?');
+        $stmt = $pdo->prepare('SELECT r.*, rest.name restaurant_name, rest.smtp_enabled, rest.smtp_host, rest.smtp_port, rest.smtp_username, rest.smtp_password, rest.smtp_encryption, rest.smtp_from_email, rest.smtp_from_name FROM reservations r INNER JOIN restaurants rest ON rest.id = r.restaurant_id WHERE r.id = ?');
         $stmt->execute(array($id));
         $reservation = $stmt->fetch();
         if ($reservation) {
-            send_reservation_email($reservation['customer_email'], 'Atualização da sua reserva', 'Sua reserva agora está com status: ' . reservation_status_label($status), $reservation);
+            send_reservation_email($reservation['customer_email'], 'Atualização da sua reserva', reservation_status_email_message($reservation, $status), $reservation);
         }
         flash('success', 'Reserva atualizada.');
     }

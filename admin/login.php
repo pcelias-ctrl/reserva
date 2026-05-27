@@ -8,20 +8,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
-    $envAdminEmail = getenv('ADMIN_EMAIL') ?: 'admin@admin.com';
-    $envAdminPassword = getenv('ADMIN_PASSWORD') ?: 'admin123';
-
-    if (strcasecmp($email, $envAdminEmail) === 0 && hash_equals($envAdminPassword, $password)) {
-        $_SESSION['admin'] = array('id' => 0, 'name' => 'Administrador', 'email' => $envAdminEmail);
-        redirect_to('index.php');
-    }
-
     $stmt = $pdo->prepare('SELECT * FROM admins WHERE email = ?');
     $stmt->execute(array($email));
     $admin = $stmt->fetch();
 
     if ($admin && password_verify($password, $admin['password_hash'])) {
         $_SESSION['admin'] = array('id' => (int)$admin['id'], 'name' => $admin['name'], 'email' => $admin['email']);
+        redirect_to('index.php');
+    }
+
+    $envAdminEmail = getenv('ADMIN_EMAIL') ?: 'admin@admin.com';
+    $envAdminPassword = getenv('ADMIN_PASSWORD') ?: 'admin123';
+    if (!$admin && strcasecmp($email, $envAdminEmail) === 0 && hash_equals($envAdminPassword, $password)) {
+        $_SESSION['admin'] = array('id' => 0, 'name' => 'Administrador', 'email' => $envAdminEmail);
         redirect_to('index.php');
     }
     flash('error', 'E-mail ou senha inválidos.');

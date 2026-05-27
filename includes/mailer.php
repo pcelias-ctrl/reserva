@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../config/app.php';
+require_once __DIR__ . '/functions.php';
 
 $LAST_EMAIL_ERROR = '';
 
@@ -14,6 +15,62 @@ function last_email_error()
 {
     global $LAST_EMAIL_ERROR;
     return $LAST_EMAIL_ERROR;
+}
+
+function email_escape($value)
+{
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+
+function email_header_text($value)
+{
+    if (function_exists('mb_encode_mimeheader')) {
+        return mb_encode_mimeheader($value, 'UTF-8', 'B');
+    }
+    return '=?UTF-8?B?' . base64_encode($value) . '?=';
+}
+
+function normalize_email_text($message)
+{
+    return trim(str_replace(array("\r\n", "\r"), "\n", (string)$message));
+}
+
+function html_email_body($subject, $message)
+{
+    $message = normalize_email_text($message);
+    $blocks = preg_split("/\n{2,}/", $message);
+    $htmlBlocks = array();
+
+    foreach ($blocks as $block) {
+        $block = trim($block);
+        if ($block === '') {
+            continue;
+        }
+        $lines = explode("\n", $block);
+        if (count($lines) > 1) {
+            $items = array();
+            foreach ($lines as $line) {
+                $items[] = '<li>' . email_escape(trim($line)) . '</li>';
+            }
+            $htmlBlocks[] = '<ul>' . implode('', $items) . '</ul>';
+        } else {
+            $htmlBlocks[] = '<p>' . nl2br(email_escape($block)) . '</p>';
+        }
+    }
+
+    return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+body{margin:0;background:#f7f8f4;color:#17211f;font-family:Arial,Helvetica,sans-serif;line-height:1.55}
+.wrap{max-width:640px;margin:0 auto;padding:28px 18px}.card{background:#fff;border:1px solid #dde5dd;border-radius:16px;box-shadow:0 12px 30px rgba(16,32,29,.08);overflow:hidden}
+.head{background:#07534d;color:#fff;padding:22px 24px}.head h1{font-size:22px;line-height:1.2;margin:0}.body{padding:24px}
+p{margin:0 0 14px}ul{margin:0 0 16px;padding:0;list-style:none}li{border-bottom:1px solid #edf2ed;padding:8px 0}li:last-child{border-bottom:0}
+.footer{color:#64716d;font-size:12px;padding:0 24px 22px}</style></head><body><div class="wrap"><div class="card"><div class="head"><h1>' . email_escape($subject) . '</h1></div><div class="body">' . implode('', $htmlBlocks) . '</div><div class="footer">Mensagem enviada automaticamente pelo i-Reserva.</div></div></div></body></html>';
+}
+
+function smtp_safe_data($html)
+{
+    $html = str_replace(array("\r\n", "\r"), "\n", $html);
+    $html = str_replace("\n.", "\n..", $html);
+    return str_replace("\n", "\r\n", $html);
 }
 
 function smtp_read($socket)
@@ -95,14 +152,16 @@ function smtp_mail($settings, $to, $subject, $message)
 
     $fromEmail = !empty($settings['smtp_from_email']) ? $settings['smtp_from_email'] : $settings['smtp_username'];
     $fromName = !empty($settings['smtp_from_name']) ? $settings['smtp_from_name'] : 'i-Reserva';
+    $html = html_email_body($subject, $message);
     $headers = array(
         'MIME-Version: 1.0',
-        'Content-Type: text/plain; charset=UTF-8',
-        'From: ' . $fromName . ' <' . $fromEmail . '>',
+        'Content-Type: text/html; charset=UTF-8',
+        'Content-Transfer-Encoding: 8bit',
+        'From: ' . email_header_text($fromName) . ' <' . $fromEmail . '>',
         'To: ' . $to,
-        'Subject: ' . $subject
+        'Subject: ' . email_header_text($subject)
     );
-    $data = implode("\r\n", $headers) . "\r\n\r\n" . str_replace("\n.", "\n..", $message);
+    $data = implode("\r\n", $headers) . "\r\n\r\n" . smtp_safe_data($html);
 
     $ok = smtp_command($socket, 'MAIL FROM:<' . $fromEmail . '>', 250)
         && smtp_command($socket, 'RCPT TO:<' . $to . '>', array(250, 251))
@@ -142,11 +201,12 @@ function send_reservation_email($to, $subject, $message, $settings = null)
 
     $headers = array(
         'MIME-Version: 1.0',
-        'Content-type: text/plain; charset=UTF-8',
-        'From: ' . $MAIL_FROM_NAME . ' <' . $MAIL_FROM . '>'
+        'Content-Type: text/html; charset=UTF-8',
+        'Content-Transfer-Encoding: 8bit',
+        'From: ' . email_header_text($MAIL_FROM_NAME) . ' <' . $MAIL_FROM . '>'
     );
 
-    $sent = @mail($to, $subject, $message, implode("\r\n", $headers));
+    $sent = @mail($to, email_header_text($subject), html_email_body($subject, $message), implode("\r\n", $headers));
     if (!$sent) {
         set_email_error('Falha no mail() do PHP. Configure o SMTP do restaurante.');
     }
@@ -157,29 +217,72 @@ function notify_reservation_created($reservation, $answers)
 {
     global $MAIL_ADMIN_TO;
 
-    $lines = array();
-    $lines[] = 'Nova reserva recebida pelo i-Reserva';
-    if (!empty($reservation['restaurant_name'])) {
-        $lines[] = 'Restaurante: ' . $reservation['restaurant_name'];
-    }
-    $lines[] = 'Cliente: ' . $reservation['customer_name'];
-    $lines[] = 'E-mail: ' . $reservation['customer_email'];
-    $lines[] = 'Telefone: ' . $reservation['customer_phone'];
-    $lines[] = 'Data/Hora: ' . $reservation['reservation_date'] . ' ' . $reservation['reservation_time'];
-    $lines[] = 'Pessoas: ' . $reservation['party_size'];
-    $lines[] = 'Ocasião: ' . $reservation['occasion_name'];
-    $lines[] = 'Restrições: ' . $reservation['dietary_restrictions'];
-    $lines[] = 'Observações: ' . $reservation['notes'];
+    $restaurantName = !empty($reservation['restaurant_name']) ? $reservation['restaurant_name'] : 'restaurante';
+    $date = date('d/m/Y', strtotime($reservation['reservation_date']));
+    $time = substr($reservation['reservation_time'], 0, 5);
 
-    foreach ($answers as $label => $answer) {
-        $lines[] = $label . ': ' . $answer;
-    }
+    $clientLines = array(
+        'Olá, ' . $reservation['customer_name'] . '!',
+        '',
+        'Recebemos sua solicitação de reserva no ' . $restaurantName . '.',
+        'A equipe do restaurante vai analisar a disponibilidade e retornar com a confirmação.',
+        '',
+        'Resumo da reserva',
+        'Restaurante: ' . $restaurantName,
+        'Data: ' . $date,
+        'Horário: ' . $time,
+        'Pessoas: ' . $reservation['party_size'],
+        'Ocasião: ' . $reservation['occasion_name'],
+        '',
+        'Obrigado por escolher o i-Reserva.'
+    );
+    send_reservation_email($reservation['customer_email'], 'Recebemos sua reserva', implode("\n", $clientLines), $reservation);
 
-    $body = implode("\n", $lines);
-    send_reservation_email($reservation['customer_email'], 'Recebemos sua reserva', "Obrigado. Sua reserva está em análise.\n\n" . $body, $reservation);
+    $adminLines = array(
+        'Nova reserva recebida pelo i-Reserva',
+        '',
+        'Restaurante: ' . $restaurantName,
+        'Cliente: ' . $reservation['customer_name'],
+        'E-mail: ' . $reservation['customer_email'],
+        'Telefone: ' . $reservation['customer_phone'],
+        'Data: ' . $date,
+        'Horário: ' . $time,
+        'Pessoas: ' . $reservation['party_size'],
+        'Ocasião: ' . $reservation['occasion_name'],
+        'Restrições alimentares: ' . ($reservation['dietary_restrictions'] ?: 'Não informado'),
+        'Observações: ' . ($reservation['notes'] ?: 'Não informado')
+    );
+
+    if ($answers) {
+        $adminLines[] = '';
+        $adminLines[] = 'Respostas do questionário';
+        foreach ($answers as $label => $answer) {
+            $adminLines[] = $label . ': ' . $answer;
+        }
+    }
 
     $adminTo = !empty($reservation['smtp_admin_email']) ? $reservation['smtp_admin_email'] : $MAIL_ADMIN_TO;
     if ($adminTo) {
-        send_reservation_email($adminTo, 'Nova reserva recebida', $body, $reservation);
+        send_reservation_email($adminTo, 'Nova reserva recebida', implode("\n", $adminLines), $reservation);
     }
+}
+
+function reservation_status_email_message($reservation, $status)
+{
+    $restaurantName = !empty($reservation['restaurant_name']) ? $reservation['restaurant_name'] : 'restaurante';
+    $date = date('d/m/Y', strtotime($reservation['reservation_date']));
+    $time = substr($reservation['reservation_time'], 0, 5);
+
+    return implode("\n", array(
+        'Olá, ' . $reservation['customer_name'] . '!',
+        '',
+        'Sua reserva no ' . $restaurantName . ' foi atualizada.',
+        '',
+        'Status atual: ' . reservation_status_label($status),
+        'Data: ' . $date,
+        'Horário: ' . $time,
+        'Pessoas: ' . $reservation['party_size'],
+        '',
+        'Em caso de dúvida, responda este e-mail ou fale diretamente com o restaurante.'
+    ));
 }
