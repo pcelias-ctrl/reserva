@@ -87,7 +87,7 @@ function restaurant_hours_summary($availability, $restaurantId)
                         <?php if (!empty($restaurant['reservation_message'])): ?>
                             <span class="restaurant-message"><?php echo e($restaurant['reservation_message']); ?></span>
                         <?php endif; ?>
-                        <span class="restaurant-select-label">Reservar neste restaurante</span>
+                        <span class="restaurant-select-label" data-default-label="Escolher restaurante" data-selected-label="Restaurante selecionado">Escolher restaurante</span>
                     </span>
                 </label>
             <?php endforeach; ?>
@@ -102,6 +102,7 @@ function restaurant_hours_summary($availability, $restaurantId)
             </div>
             <span class="selected-restaurant-pill" id="selectedRestaurantPill"></span>
         </div>
+        <div class="selected-restaurant-summary" id="selectedRestaurantSummary"></div>
         <div class="grid two">
             <label>Data
                 <input type="date" name="reservation_date" required min="<?php echo date('Y-m-d'); ?>">

@@ -20,17 +20,34 @@ var reservationDate = document.querySelector('input[name="reservation_date"]');
 var reservationTime = document.getElementById('reservationTime');
 var reservationDetails = document.getElementById('reservationDetails');
 var selectedRestaurantPill = document.getElementById('selectedRestaurantPill');
+var selectedRestaurantSummary = document.getElementById('selectedRestaurantSummary');
 
 function syncRestaurantShowcase(scrollToDetails) {
     var selectedRestaurant = document.querySelector('input[name="restaurant_id"]:checked');
     Array.prototype.forEach.call(document.querySelectorAll('.restaurant-showcase-card'), function (card) {
         var input = card.querySelector('input[name="restaurant_id"]');
-        card.classList.toggle('selected', input && selectedRestaurant && input.value === selectedRestaurant.value);
+        var selected = input && selectedRestaurant && input.value === selectedRestaurant.value;
+        var label = card.querySelector('.restaurant-select-label');
+        card.classList.toggle('selected', selected);
+        if (label) {
+            label.textContent = selected ? label.getAttribute('data-selected-label') : label.getAttribute('data-default-label');
+        }
     });
     if (selectedRestaurantPill && selectedRestaurant) {
         var card = selectedRestaurant.closest('.restaurant-showcase-card');
         var name = card ? card.querySelector('.restaurant-showcase-content strong') : null;
-        selectedRestaurantPill.textContent = name ? name.textContent : '';
+        selectedRestaurantPill.textContent = name ? 'Selecionado: ' + name.textContent : '';
+        if (selectedRestaurantSummary && card) {
+            var logo = card.querySelector('.restaurant-logo.featured');
+            var address = card.querySelector('.restaurant-showcase-content em');
+            var meta = card.querySelector('.restaurant-meta');
+            selectedRestaurantSummary.innerHTML = ''
+                + '<div class="selected-restaurant-logo">' + (logo ? logo.innerHTML : '') + '</div>'
+                + '<div><strong>' + (name ? name.textContent : '') + '</strong>'
+                + (address ? '<p>' + address.textContent + '</p>' : '')
+                + (meta ? '<small>' + meta.textContent.replace(/\s+/g, ' ').trim() + '</small>' : '')
+                + '</div>';
+        }
     }
     if (scrollToDetails && reservationDetails) {
         reservationDetails.scrollIntoView({behavior: 'smooth', block: 'start'});
