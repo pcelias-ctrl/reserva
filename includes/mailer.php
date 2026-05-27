@@ -30,6 +30,15 @@ function email_header_text($value)
     return '=?UTF-8?B?' . base64_encode($value) . '?=';
 }
 
+function email_linkify($escapedText)
+{
+    return preg_replace(
+        '~(https?://[^\s<]+)~',
+        '<a href="$1" style="color:#087f73;font-weight:700">$1</a>',
+        $escapedText
+    );
+}
+
 function normalize_email_text($message)
 {
     return trim(str_replace(array("\r\n", "\r"), "\n", (string)$message));
@@ -50,11 +59,11 @@ function html_email_body($subject, $message)
         if (count($lines) > 1) {
             $items = array();
             foreach ($lines as $line) {
-                $items[] = '<li>' . email_escape(trim($line)) . '</li>';
+                $items[] = '<li>' . email_linkify(email_escape(trim($line))) . '</li>';
             }
             $htmlBlocks[] = '<ul>' . implode('', $items) . '</ul>';
         } else {
-            $htmlBlocks[] = '<p>' . nl2br(email_escape($block)) . '</p>';
+            $htmlBlocks[] = '<p>' . nl2br(email_linkify(email_escape($block))) . '</p>';
         }
     }
 

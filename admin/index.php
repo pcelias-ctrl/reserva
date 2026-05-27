@@ -57,8 +57,13 @@ function panel_url($params)
 
 function feedback_message($reservation)
 {
+    global $APP_URL;
+
     $restaurant = !empty($reservation['restaurant_name']) ? $reservation['restaurant_name'] : 'nosso restaurante';
     $dateLine = 'Reserva: ' . date('d/m/Y', strtotime($reservation['reservation_date'])) . ' às ' . substr($reservation['reservation_time'], 0, 5);
+    $baseUrl = !empty($APP_URL) ? $APP_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']);
+    $customerAreaUrl = rtrim($baseUrl, '/') . '/minhas-reservas.php';
+    $hasCustomerPassword = !empty($reservation['customer_has_password']);
 
     if ($reservation['status'] === 'no_show') {
         $lines = array(
@@ -68,7 +73,9 @@ function feedback_message($reservation)
             '',
             'Quer agendar uma nova data? Conte o que aconteceu para que a equipe possa cuidar melhor do próximo contato.',
             '',
-            'Você também pode acessar sua área no i-Reserva e registrar seu feedback diretamente na reserva.',
+            $hasCustomerPassword
+                ? 'Se preferir, acesse sua área no i-Reserva para deixar seu feedback: ' . $customerAreaUrl
+                : 'Se preferir, responda este e-mail contando o que aconteceu. A equipe vai receber sua mensagem com atenção.',
             '',
             $dateLine,
             '',
@@ -82,13 +89,17 @@ function feedback_message($reservation)
         '',
         'Obrigado por escolher o ' . $restaurant . '. Deu tudo certo na sua experiência?',
         '',
-        'Queremos muito ouvir você: conte como foi a visita e o que podemos melhorar para tornar o próximo atendimento ainda melhor.',
+        'Sua opinião ajuda a equipe a cuidar melhor de cada detalhe: atendimento, ambiente, tempo de espera, pratos e tudo o que fez diferença na sua visita.',
         '',
-        'Você também pode acessar sua área no i-Reserva e registrar seu feedback diretamente na reserva.',
+        'Pode responder este e-mail com poucas palavras mesmo: o que foi ótimo, o que poderia melhorar e se você voltaria a reservar conosco.',
+        '',
+        $hasCustomerPassword
+            ? 'Se quiser registrar pelo sistema, acesse sua área no i-Reserva: ' . $customerAreaUrl
+            : 'Se você ainda não criou senha no i-Reserva, sem problema: basta responder este e-mail e seu feedback chegará ao restaurante.',
         '',
         $dateLine,
         '',
-        'Até a próxima!'
+        'Obrigado por dividir sua experiência com a gente. Até a próxima!'
     );
     return implode("\n", $lines);
 }
@@ -100,14 +111,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'send_feedback_email' && $reservationId) {
         $stmt = $pdo->prepare(
-            "SELECT r.*, rest.name restaurant_name, rest.smtp_enabled, rest.smtp_host, rest.smtp_port, rest.smtp_username, rest.smtp_password, rest.smtp_encryption, rest.smtp_from_email, rest.smtp_from_name
+            "SELECT r.*, rest.name restaurant_name, rest.smtp_enabled, rest.smtp_host, rest.smtp_port, rest.smtp_username, rest.smtp_password, rest.smtp_encryption, rest.smtp_from_email, rest.smtp_from_name,
+                    (c.password_hash IS NOT NULL AND c.password_hash <> '') AS customer_has_password
              FROM reservations r
              INNER JOIN restaurants rest ON rest.id = r.restaurant_id
+             LEFT JOIN customers c ON c.id = r.customer_id OR LOWER(c.email) = LOWER(r.customer_email)
              WHERE r.id = ?"
         );
         $stmt->execute(array($reservationId));
         $reservation = $stmt->fetch();
-        if ($reservation && send_reservation_email($reservation['customer_email'], 'Obrigado pela sua visita', feedback_message($reservation), $reservation)) {
+        if ($reservation && send_reservation_email($reservation['customer_email'], 'Como foi sua experiência?', feedback_message($reservation), $reservation)) {
             flash('success', 'E-mail de agradecimento enviado para ' . $reservation['customer_email'] . '.');
         } else {
             flash('error', 'Não foi possível enviar o e-mail: ' . last_email_error());
