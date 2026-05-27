@@ -1823,8 +1823,7 @@ html[data-config-tab="ocasioes"] #questionario > .panel:first-child {
         box-shadow: 0 -14px 34px rgba(16, 32, 29, 0.14);
         display: grid;
         gap: 4px;
-        grid-auto-flow: column;
-        grid-auto-columns: 1fr;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         left: 0;
         padding: 8px 10px max(8px, env(safe-area-inset-bottom));
         position: fixed;
@@ -1838,9 +1837,12 @@ html[data-config-tab="ocasioes"] #questionario > .panel:first-child {
         display: flex;
         font-size: 12px;
         justify-content: center;
-        min-height: 44px;
+        line-height: 1.15;
+        min-height: 42px;
+        overflow-wrap: anywhere;
         padding: 8px 6px;
         text-align: center;
+        word-break: normal;
     }
 
     .topbar nav a:hover {
@@ -1877,7 +1879,11 @@ html[data-config-tab="ocasioes"] #questionario > .panel:first-child {
 
     .page {
         max-width: 520px;
-        padding: 18px 14px 104px;
+        padding: 18px 14px 132px;
+    }
+
+    .public-shell .page {
+        padding-bottom: 104px;
     }
 
     .hero,
