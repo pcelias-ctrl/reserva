@@ -91,6 +91,14 @@ if ($selectedEnvironmentId) {
     $stmt->execute(array($selectedEnvironmentId));
     $tables = $stmt->fetchAll();
 }
+
+function table_visual_layout($table)
+{
+    if ($table['shape'] === 'round') {
+        return 'round';
+    }
+    return (int)$table['seats'] >= 4 ? 'rectangle' : 'square';
+}
 ?>
 <section class="dashboard-hero compact-hero">
     <div>
@@ -212,9 +220,15 @@ if ($selectedEnvironmentId) {
         </div>
         <div class="floor-map" data-save-url="configuracoes.php" data-csrf="<?php echo e(csrf_token()); ?>" style="width: <?php echo (int)$selectedEnvironment['width']; ?>px; height: <?php echo (int)$selectedEnvironment['height']; ?>px;">
             <?php foreach ($tables as $table): ?>
-                <button class="map-table <?php echo e($table['shape']); ?> <?php echo $table['status'] === 'inactive' ? 'inactive' : ''; ?>" data-id="<?php echo (int)$table['id']; ?>" style="left: <?php echo (int)$table['position_x']; ?>px; top: <?php echo (int)$table['position_y']; ?>px;">
-                    <strong><?php echo e($table['label']); ?></strong>
-                    <span><?php echo (int)$table['seats']; ?> lugares</span>
+                <?php $chairCount = min(max((int)$table['seats'], 1), 8); ?>
+                <button class="map-table layout-<?php echo e(table_visual_layout($table)); ?> chair-count-<?php echo $chairCount; ?> <?php echo $table['status'] === 'inactive' ? 'inactive' : ''; ?>" data-id="<?php echo (int)$table['id']; ?>" style="left: <?php echo (int)$table['position_x']; ?>px; top: <?php echo (int)$table['position_y']; ?>px;">
+                    <?php for ($chair = 1; $chair <= $chairCount; $chair++): ?>
+                        <span class="chair chair-<?php echo $chair; ?>" aria-hidden="true"></span>
+                    <?php endfor; ?>
+                    <span class="table-surface">
+                        <strong><?php echo e($table['label']); ?></strong>
+                        <em><?php echo (int)$table['seats']; ?> lugares</em>
+                    </span>
                 </button>
             <?php endforeach; ?>
         </div>
@@ -230,7 +244,7 @@ if ($selectedEnvironmentId) {
                 <form method="post" class="table-editor-card">
                     <div class="table-card-title">
                         <div class="table-title-group">
-                            <span class="table-shape-preview <?php echo e($table['shape']); ?>"></span>
+                            <span class="table-shape-preview <?php echo e(table_visual_layout($table)); ?>"></span>
                             <h3>Mesa <?php echo e($table['label']); ?></h3>
                         </div>
                         <span class="badge"><?php echo (int)$table['seats']; ?> lugares</span>
