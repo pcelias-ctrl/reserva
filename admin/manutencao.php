@@ -5,7 +5,7 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_admin();
 
-$admin = current_admin();
+$admin = isset($_SESSION['admin']) ? $_SESSION['admin'] : null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
