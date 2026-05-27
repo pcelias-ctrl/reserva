@@ -137,10 +137,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect_to(occupancy_url(array('date' => $layoutDate, 'environment_id' => $environmentId)));
     }
 
+    if ($action === 'hide_base_table') {
+        $tableId = (int)$_POST['table_id'];
+        $stmt = $pdo->prepare(
+            'INSERT IGNORE INTO occupancy_hidden_tables (layout_date, environment_id, table_id)
+             VALUES (?, ?, ?)'
+        );
+        $stmt->execute(array($layoutDate, $environmentId, $tableId));
+        $pdo->prepare('DELETE FROM occupancy_assignments WHERE layout_date = ? AND environment_id = ? AND table_id = ?')->execute(array($layoutDate, $environmentId, $tableId));
+        $pdo->prepare('DELETE FROM occupancy_table_overrides WHERE layout_date = ? AND environment_id = ? AND table_id = ?')->execute(array($layoutDate, $environmentId, $tableId));
+        $pdo->prepare('DELETE FROM occupancy_layouts WHERE layout_date = ? AND environment_id = ? AND table_id = ?')->execute(array($layoutDate, $environmentId, $tableId));
+        $pdo->prepare('UPDATE reservations SET table_id = NULL WHERE reservation_date = ? AND environment_id = ? AND table_id = ?')->execute(array($layoutDate, $environmentId, $tableId));
+        flash('success', 'Mesa removida do layout deste dia.');
+        redirect_to(occupancy_url(array('date' => $layoutDate, 'environment_id' => $environmentId)));
+    }
+
+    if ($action === 'restore_base_table') {
+        $tableId = (int)$_POST['table_id'];
+        $pdo->prepare('DELETE FROM occupancy_hidden_tables WHERE layout_date = ? AND environment_id = ? AND table_id = ?')->execute(array($layoutDate, $environmentId, $tableId));
+        refresh_source_table_override($pdo, $layoutDate, $environmentId, $tableId);
+        flash('success', 'Mesa restaurada no layout deste dia.');
+        redirect_to(occupancy_url(array('date' => $layoutDate, 'environment_id' => $environmentId)));
+    }
+
     if ($action === 'clear_daily_layout') {
         $pdo->prepare('DELETE FROM occupancy_assignments WHERE layout_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
         $pdo->prepare('DELETE FROM occupancy_extra_tables WHERE layout_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
         $pdo->prepare('DELETE FROM occupancy_table_overrides WHERE layout_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
+        $pdo->prepare('DELETE FROM occupancy_hidden_tables WHERE layout_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
         $pdo->prepare('DELETE FROM occupancy_layouts WHERE layout_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
         $pdo->prepare('UPDATE reservations SET environment_id = NULL, table_id = NULL WHERE reservation_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
         flash('success', 'Layout do dia limpo. O ambiente voltou ao desenho original.');
@@ -232,17 +256,30 @@ $stmt->execute(array($selectedRestaurantId, $selectedDate));
 $reservations = $stmt->fetchAll();
 
 $baseTables = array();
+$allBaseTables = array();
+$hiddenTableIds = array();
 $extraTables = array();
 if ($selectedEnvironmentId) {
+    $stmt = $pdo->prepare('SELECT table_id FROM occupancy_hidden_tables WHERE layout_date = ? AND environment_id = ?');
+    $stmt->execute(array($selectedDate, $selectedEnvironmentId));
+    foreach ($stmt->fetchAll() as $hiddenTable) {
+        $hiddenTableIds[] = (int)$hiddenTable['table_id'];
+    }
+
+    $stmt = $pdo->prepare("SELECT * FROM tables_map WHERE environment_id = ? AND status = 'active' ORDER BY label");
+    $stmt->execute(array($selectedEnvironmentId));
+    $allBaseTables = $stmt->fetchAll();
+
     $stmt = $pdo->prepare(
         "SELECT t.*, COALESCE(oto.seats, t.seats) seats, COALESCE(ol.position_x, t.position_x) daily_x, COALESCE(ol.position_y, t.position_y) daily_y, 'base' table_kind
          FROM tables_map t
          LEFT JOIN occupancy_layouts ol ON ol.table_id = t.id AND ol.environment_id = t.environment_id AND ol.layout_date = ?
          LEFT JOIN occupancy_table_overrides oto ON oto.table_id = t.id AND oto.environment_id = t.environment_id AND oto.layout_date = ?
-         WHERE t.environment_id = ? AND t.status = 'active'
+         LEFT JOIN occupancy_hidden_tables oht ON oht.table_id = t.id AND oht.environment_id = t.environment_id AND oht.layout_date = ?
+         WHERE t.environment_id = ? AND t.status = 'active' AND oht.id IS NULL
          ORDER BY t.label"
     );
-    $stmt->execute(array($selectedDate, $selectedDate, $selectedEnvironmentId));
+    $stmt->execute(array($selectedDate, $selectedDate, $selectedDate, $selectedEnvironmentId));
     $baseTables = $stmt->fetchAll();
 
     $stmt = $pdo->prepare("SELECT *, position_x daily_x, position_y daily_y, 'extra' table_kind FROM occupancy_extra_tables WHERE layout_date = ? AND environment_id = ? ORDER BY label");
@@ -348,7 +385,7 @@ foreach ($restaurants as $restaurant) {
                 <button class="button danger" type="submit">Limpar layout do dia</button>
             </form>
             <details class="extra-table-drawer">
-                <summary>Separar ou ajustar mesas do dia</summary>
+                <summary>Adicionar, remover ou ajustar mesas do dia</summary>
             <form method="post" class="extra-table-form">
                 <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
                 <input type="hidden" name="action" value="create_extra_table">
@@ -359,7 +396,7 @@ foreach ($restaurants as $restaurant) {
                 <div class="grid two">
                     <label>Mesa origem
                         <select name="source_table_id">
-                            <option value="">Sem origem</option>
+                            <option value="">Mesa extra sem origem</option>
                             <?php foreach ($baseTables as $table): ?><option value="<?php echo (int)$table['id']; ?>"><?php echo e($table['label']); ?> · <?php echo (int)$table['seats']; ?> lugares</option><?php endforeach; ?>
                         </select>
                     </label>
@@ -369,8 +406,26 @@ foreach ($restaurants as $restaurant) {
                         <select name="shape"><option value="square">Quadrada</option><option value="round">Redonda</option></select>
                     </label>
                 </div>
-                <button class="button ghost" type="submit">Criar mesa separada</button>
+                <button class="button ghost" type="submit">Criar mesa do dia</button>
             </form>
+                <div class="daily-table-tools">
+                    <h3>Mesas fixas deste ambiente</h3>
+                    <p class="muted-line">Remova apenas do layout desta data. O cadastro original continua intacto.</p>
+                    <div class="daily-table-list">
+                        <?php foreach ($allBaseTables as $table): ?>
+                            <?php $isHidden = in_array((int)$table['id'], $hiddenTableIds, true); ?>
+                            <form method="post" class="<?php echo $isHidden ? 'is-hidden' : ''; ?>">
+                                <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                                <input type="hidden" name="action" value="<?php echo $isHidden ? 'restore_base_table' : 'hide_base_table'; ?>">
+                                <input type="hidden" name="layout_date" value="<?php echo e($selectedDate); ?>">
+                                <input type="hidden" name="environment_id" value="<?php echo (int)$selectedEnvironmentId; ?>">
+                                <input type="hidden" name="table_id" value="<?php echo (int)$table['id']; ?>">
+                                <span><strong><?php echo e($table['label']); ?></strong><em><?php echo (int)$table['seats']; ?> lugares</em></span>
+                                <button class="button <?php echo $isHidden ? 'ghost' : 'danger'; ?>" type="submit"><?php echo $isHidden ? 'Restaurar' : 'Remover do dia'; ?></button>
+                            </form>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </details>
         <?php endif; ?>
 

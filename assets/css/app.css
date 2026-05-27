@@ -1107,6 +1107,50 @@ td small {
     margin: 0;
 }
 
+.daily-table-tools {
+    background: #fff;
+    border-top: 1px solid rgba(8, 83, 77, 0.1);
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+}
+
+.daily-table-tools h3 {
+    color: var(--primary-dark);
+    margin: 0;
+}
+
+.daily-table-list {
+    display: grid;
+    gap: 8px;
+}
+
+.daily-table-list form {
+    align-items: center;
+    background: #fbfdfa;
+    border: 1px solid rgba(8, 83, 77, 0.12);
+    border-radius: 12px;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 1fr auto;
+    padding: 9px;
+}
+
+.daily-table-list form.is-hidden {
+    background: #fff3dc;
+}
+
+.daily-table-list span {
+    display: grid;
+    gap: 2px;
+}
+
+.daily-table-list em {
+    color: var(--muted);
+    font-size: 12px;
+    font-style: normal;
+}
+
 .occupancy-reservation-card strong {
     color: var(--primary-dark);
 }
