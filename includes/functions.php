@@ -80,6 +80,17 @@ function build_whatsapp_url($phone, $message)
     return 'https://wa.me/' . $digits . '?text=' . rawurlencode($message);
 }
 
+function restaurant_logo_src($restaurant)
+{
+    if (!empty($restaurant['logo_mime'])) {
+        return '/logo.php?id=' . (int)$restaurant['id'];
+    }
+    if (!empty($restaurant['logo_url'])) {
+        return $restaurant['logo_url'];
+    }
+    return '';
+}
+
 function reservation_whatsapp_message($reservation)
 {
     $lines = array(

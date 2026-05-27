@@ -5,7 +5,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 $occasions = $pdo->query("SELECT * FROM occasions WHERE status = 'active' ORDER BY name")->fetchAll();
 $questions = $pdo->query("SELECT * FROM questionnaire_questions WHERE status = 'active' ORDER BY sort_order, id")->fetchAll();
-$restaurants = $pdo->query("SELECT * FROM restaurants WHERE status = 'active' ORDER BY name")->fetchAll();
+$restaurants = $pdo->query("SELECT id, name, logo_url, logo_mime, address FROM restaurants WHERE status = 'active' ORDER BY name")->fetchAll();
 $environments = $pdo->query("SELECT e.*, r.name restaurant_name FROM environments e INNER JOIN restaurants r ON r.id = e.restaurant_id WHERE e.status = 'active' AND r.status = 'active' ORDER BY r.name, e.name")->fetchAll();
 $customer = current_customer();
 ?>
@@ -34,8 +34,8 @@ $customer = current_customer();
                 <label class="restaurant-option">
                     <input type="radio" name="restaurant_id" value="<?php echo (int)$restaurant['id']; ?>" <?php echo $index === 0 ? 'checked' : ''; ?> required>
                     <span class="restaurant-logo small">
-                        <?php if (!empty($restaurant['logo_url'])): ?>
-                            <img src="<?php echo e($restaurant['logo_url']); ?>" alt="<?php echo e($restaurant['name']); ?>">
+                        <?php if ($logo = restaurant_logo_src($restaurant)): ?>
+                            <img src="<?php echo e($logo); ?>" alt="<?php echo e($restaurant['name']); ?>">
                         <?php else: ?>
                             <strong><?php echo e(substr($restaurant['name'], 0, 1)); ?></strong>
                         <?php endif; ?>

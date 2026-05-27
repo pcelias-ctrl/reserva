@@ -84,6 +84,7 @@ Depois do deploy:
 - Reserva publica sem login.
 - Reserva com cliente logado.
 - Multi-restaurante com dados cadastrais, logo por URL e WhatsApp.
+- Upload de foto/logo do restaurante salvo no banco de dados.
 - Cadastro/login simples de cliente.
 - Ocasioes especiais cadastraveis no admin.
 - Perguntas dinamicas cadastraveis no admin.
@@ -92,6 +93,7 @@ Depois do deploy:
 - Cockpit administrativo com indicadores, agenda e acoes de aprovacao/confirmacao.
 - Cadastro de ambientes.
 - Cadastro visual de mesas por ambiente com posicao `x/y` salva em banco.
+- Edicao de ambientes, dimensoes do layout e dados das mesas cadastradas.
 - Link de WhatsApp com mensagem pronta para o restaurante selecionado ao final da reserva.
 
 ## Proximos incrementos sugeridos

@@ -27,10 +27,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('success', 'Ambiente cadastrado.');
     }
 
+    if ($action === 'update_environment') {
+        $stmt = $pdo->prepare('UPDATE environments SET restaurant_id = ?, name = ?, description = ?, width = ?, height = ?, status = ? WHERE id = ?');
+        $stmt->execute(array(
+            (int)$_POST['restaurant_id'],
+            trim($_POST['name']),
+            trim($_POST['description']),
+            (int)$_POST['width'],
+            (int)$_POST['height'],
+            $_POST['status'],
+            (int)$_POST['environment_id']
+        ));
+        flash('success', 'Ambiente atualizado.');
+        redirect_to('configuracoes.php?environment_id=' . (int)$_POST['environment_id']);
+    }
+
     if ($action === 'table') {
         $stmt = $pdo->prepare('INSERT INTO tables_map (environment_id, label, shape, seats, position_x, position_y) VALUES (?, ?, ?, ?, 40, 40)');
         $stmt->execute(array((int)$_POST['environment_id'], trim($_POST['label']), $_POST['shape'], (int)$_POST['seats']));
         flash('success', 'Mesa cadastrada.');
+    }
+
+    if ($action === 'update_table') {
+        $stmt = $pdo->prepare('UPDATE tables_map SET label = ?, shape = ?, seats = ?, status = ? WHERE id = ?');
+        $stmt->execute(array(trim($_POST['label']), $_POST['shape'], (int)$_POST['seats'], $_POST['status'], (int)$_POST['table_id']));
+        flash('success', 'Mesa atualizada.');
+        redirect_to('configuracoes.php?environment_id=' . (int)$_POST['environment_id']);
     }
 
     if ($action === 'move_table') {
@@ -54,7 +76,7 @@ $selectedEnvironmentId = isset($_GET['environment_id']) ? (int)$_GET['environmen
 $tables = array();
 $selectedEnvironment = null;
 if ($selectedEnvironmentId) {
-    $stmt = $pdo->prepare('SELECT * FROM environments WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT e.*, r.name restaurant_name FROM environments e INNER JOIN restaurants r ON r.id = e.restaurant_id WHERE e.id = ?');
     $stmt->execute(array($selectedEnvironmentId));
     $selectedEnvironment = $stmt->fetch();
     $stmt = $pdo->prepare('SELECT * FROM tables_map WHERE environment_id = ? ORDER BY label');
@@ -121,6 +143,35 @@ if ($selectedEnvironmentId) {
     </div>
 
     <div class="settings-grid">
+        <?php if ($selectedEnvironment): ?>
+            <form method="post">
+                <h3>Editar ambiente selecionado</h3>
+                <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                <input type="hidden" name="action" value="update_environment">
+                <input type="hidden" name="environment_id" value="<?php echo (int)$selectedEnvironment['id']; ?>">
+                <label>Restaurante
+                    <select name="restaurant_id" required>
+                        <?php foreach ($restaurants as $restaurant): ?>
+                            <option value="<?php echo (int)$restaurant['id']; ?>" <?php echo (int)$selectedEnvironment['restaurant_id'] === (int)$restaurant['id'] ? 'selected' : ''; ?>><?php echo e($restaurant['name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <label>Nome <input type="text" name="name" required value="<?php echo e($selectedEnvironment['name']); ?>"></label>
+                <label>Descricao <textarea name="description" rows="2"><?php echo e($selectedEnvironment['description']); ?></textarea></label>
+                <div class="grid two">
+                    <label>Largura <input type="number" name="width" value="<?php echo (int)$selectedEnvironment['width']; ?>"></label>
+                    <label>Altura <input type="number" name="height" value="<?php echo (int)$selectedEnvironment['height']; ?>"></label>
+                </div>
+                <label>Status
+                    <select name="status">
+                        <option value="active" <?php echo $selectedEnvironment['status'] === 'active' ? 'selected' : ''; ?>>Ativo</option>
+                        <option value="inactive" <?php echo $selectedEnvironment['status'] === 'inactive' ? 'selected' : ''; ?>>Inativo</option>
+                    </select>
+                </label>
+                <button class="button primary" type="submit">Salvar ambiente</button>
+            </form>
+        <?php endif; ?>
+
         <form method="post">
             <h3>Novo ambiente</h3>
             <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
@@ -163,10 +214,39 @@ if ($selectedEnvironmentId) {
     <?php if ($selectedEnvironment): ?>
         <div class="floor-map" data-save-url="configuracoes.php" data-csrf="<?php echo e(csrf_token()); ?>" style="width: <?php echo (int)$selectedEnvironment['width']; ?>px; height: <?php echo (int)$selectedEnvironment['height']; ?>px;">
             <?php foreach ($tables as $table): ?>
-                <button class="map-table <?php echo e($table['shape']); ?>" data-id="<?php echo (int)$table['id']; ?>" style="left: <?php echo (int)$table['position_x']; ?>px; top: <?php echo (int)$table['position_y']; ?>px;">
+                <button class="map-table <?php echo e($table['shape']); ?> <?php echo $table['status'] === 'inactive' ? 'inactive' : ''; ?>" data-id="<?php echo (int)$table['id']; ?>" style="left: <?php echo (int)$table['position_x']; ?>px; top: <?php echo (int)$table['position_y']; ?>px;">
                     <strong><?php echo e($table['label']); ?></strong>
                     <span><?php echo (int)$table['seats']; ?> lugares</span>
                 </button>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="table-editor-grid">
+            <?php foreach ($tables as $table): ?>
+                <form method="post" class="table-editor-card">
+                    <h3>Mesa <?php echo e($table['label']); ?></h3>
+                    <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                    <input type="hidden" name="action" value="update_table">
+                    <input type="hidden" name="environment_id" value="<?php echo (int)$selectedEnvironment['id']; ?>">
+                    <input type="hidden" name="table_id" value="<?php echo (int)$table['id']; ?>">
+                    <label>Identificacao <input type="text" name="label" required value="<?php echo e($table['label']); ?>"></label>
+                    <div class="grid two">
+                        <label>Formato
+                            <select name="shape">
+                                <option value="square" <?php echo $table['shape'] === 'square' ? 'selected' : ''; ?>>Quadrada</option>
+                                <option value="round" <?php echo $table['shape'] === 'round' ? 'selected' : ''; ?>>Redonda</option>
+                            </select>
+                        </label>
+                        <label>Lugares <input type="number" name="seats" min="1" value="<?php echo (int)$table['seats']; ?>"></label>
+                    </div>
+                    <label>Status
+                        <select name="status">
+                            <option value="active" <?php echo $table['status'] === 'active' ? 'selected' : ''; ?>>Ativa</option>
+                            <option value="inactive" <?php echo $table['status'] === 'inactive' ? 'selected' : ''; ?>>Inativa</option>
+                        </select>
+                    </label>
+                    <button class="button ghost" type="submit">Salvar mesa</button>
+                </form>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>

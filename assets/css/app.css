@@ -538,6 +538,24 @@ td small {
     gap: 10px;
 }
 
+.table-editor-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 18px;
+}
+
+.table-editor-card {
+    background: linear-gradient(180deg, #fff, #fbfdfa);
+    border: 1px solid rgba(8, 83, 77, 0.1);
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.table-editor-card h3 {
+    margin-top: 0;
+}
+
 .compact-list {
     color: var(--muted);
     margin: 16px 0 0;
@@ -588,6 +606,10 @@ td small {
 .map-table.dragging {
     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
     z-index: 5;
+}
+
+.map-table.inactive {
+    opacity: 0.46;
 }
 
 .birthday-fields {
@@ -667,7 +689,8 @@ td small {
     .reservation-card,
     .metric-grid,
     .restaurant-choice,
-    .restaurant-card {
+    .restaurant-card,
+    .table-editor-grid {
         grid-template-columns: 1fr;
     }
 

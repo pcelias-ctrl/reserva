@@ -35,12 +35,22 @@ if (!table_exists($pdo, 'restaurants')) {
           phone VARCHAR(40) NULL,
           whatsapp VARCHAR(40) NOT NULL,
           logo_url VARCHAR(500) NULL,
+          logo_mime VARCHAR(80) NULL,
+          logo_data MEDIUMBLOB NULL,
           address TEXT NULL,
           reservation_message TEXT NULL,
           status ENUM('active','inactive') NOT NULL DEFAULT 'active',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
     );
+}
+
+if (!column_exists($pdo, 'restaurants', 'logo_mime')) {
+    $pdo->exec('ALTER TABLE restaurants ADD logo_mime VARCHAR(80) NULL AFTER logo_url');
+}
+
+if (!column_exists($pdo, 'restaurants', 'logo_data')) {
+    $pdo->exec('ALTER TABLE restaurants ADD logo_data MEDIUMBLOB NULL AFTER logo_mime');
 }
 
 $stmt = $pdo->query('SELECT COUNT(*) total FROM restaurants');

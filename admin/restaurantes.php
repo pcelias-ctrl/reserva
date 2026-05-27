@@ -8,6 +8,27 @@ require_admin();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+    $logoMime = null;
+    $logoData = null;
+    $hasUpload = !empty($_FILES['logo_file']['tmp_name']) && is_uploaded_file($_FILES['logo_file']['tmp_name']);
+
+    if ($hasUpload) {
+        if ($_FILES['logo_file']['size'] > 1600000) {
+            flash('error', 'A imagem deve ter no maximo 1.6MB.');
+            redirect_to('restaurantes.php' . ($id ? '?id=' . $id : ''));
+        }
+
+        $info = @getimagesize($_FILES['logo_file']['tmp_name']);
+        $allowed = array('image/jpeg', 'image/png', 'image/webp', 'image/gif');
+        if (!$info || !in_array($info['mime'], $allowed, true)) {
+            flash('error', 'Envie uma imagem JPG, PNG, WEBP ou GIF.');
+            redirect_to('restaurantes.php' . ($id ? '?id=' . $id : ''));
+        }
+
+        $logoMime = $info['mime'];
+        $logoData = file_get_contents($_FILES['logo_file']['tmp_name']);
+    }
+
     $payload = array(
         trim($_POST['name']),
         trim($_POST['legal_name']),
@@ -22,18 +43,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     );
 
     if ($id) {
-        $payload[] = $id;
-        $stmt = $pdo->prepare(
-            'UPDATE restaurants
-             SET name = ?, legal_name = ?, document_number = ?, email = ?, phone = ?, whatsapp = ?, logo_url = ?, address = ?, reservation_message = ?, status = ?
-             WHERE id = ?'
-        );
+        if ($hasUpload) {
+            $payload[] = $logoMime;
+            $payload[] = $logoData;
+            $payload[] = $id;
+            $stmt = $pdo->prepare(
+                'UPDATE restaurants
+                 SET name = ?, legal_name = ?, document_number = ?, email = ?, phone = ?, whatsapp = ?, logo_url = ?, address = ?, reservation_message = ?, status = ?, logo_mime = ?, logo_data = ?
+                 WHERE id = ?'
+            );
+        } elseif (!empty($_POST['remove_logo'])) {
+            $payload[] = $id;
+            $stmt = $pdo->prepare(
+                'UPDATE restaurants
+                 SET name = ?, legal_name = ?, document_number = ?, email = ?, phone = ?, whatsapp = ?, logo_url = ?, address = ?, reservation_message = ?, status = ?, logo_mime = NULL, logo_data = NULL
+                 WHERE id = ?'
+            );
+        } else {
+            $payload[] = $id;
+            $stmt = $pdo->prepare(
+                'UPDATE restaurants
+                 SET name = ?, legal_name = ?, document_number = ?, email = ?, phone = ?, whatsapp = ?, logo_url = ?, address = ?, reservation_message = ?, status = ?
+                 WHERE id = ?'
+            );
+        }
         $stmt->execute($payload);
         flash('success', 'Restaurante atualizado.');
     } else {
+        $payload[] = $logoMime;
+        $payload[] = $logoData;
         $stmt = $pdo->prepare(
-            'INSERT INTO restaurants (name, legal_name, document_number, email, phone, whatsapp, logo_url, address, reservation_message, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO restaurants (name, legal_name, document_number, email, phone, whatsapp, logo_url, address, reservation_message, status, logo_mime, logo_data)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute($payload);
         flash('success', 'Restaurante cadastrado.');
@@ -44,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/header.php';
 
-$restaurants = $pdo->query('SELECT * FROM restaurants ORDER BY status, name')->fetchAll();
+$restaurants = $pdo->query('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, address, reservation_message, status, created_at FROM restaurants ORDER BY status, name')->fetchAll();
 $edit = null;
 if (!empty($_GET['id'])) {
     $stmt = $pdo->prepare('SELECT * FROM restaurants WHERE id = ?');
@@ -62,7 +103,7 @@ if (!empty($_GET['id'])) {
 <section class="settings-grid">
     <div class="panel">
         <h2><?php echo $edit ? 'Editar restaurante' : 'Novo restaurante'; ?></h2>
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
             <?php if ($edit): ?><input type="hidden" name="id" value="<?php echo (int)$edit['id']; ?>"><?php endif; ?>
             <label>Nome comercial
@@ -96,6 +137,12 @@ if (!empty($_GET['id'])) {
             <label>URL do logo
                 <input type="url" name="logo_url" placeholder="https://..." value="<?php echo e($edit ? $edit['logo_url'] : ''); ?>">
             </label>
+            <label>Upload da foto/logo
+                <input type="file" name="logo_file" accept="image/png,image/jpeg,image/webp,image/gif">
+            </label>
+            <?php if ($edit && !empty($edit['logo_mime'])): ?>
+                <label class="check"><input type="checkbox" name="remove_logo" value="1"> Remover logo salvo no banco</label>
+            <?php endif; ?>
             <label>Endereco
                 <textarea name="address" rows="3"><?php echo e($edit ? $edit['address'] : ''); ?></textarea>
             </label>
@@ -110,8 +157,8 @@ if (!empty($_GET['id'])) {
         <?php foreach ($restaurants as $restaurant): ?>
             <article class="restaurant-card">
                 <div class="restaurant-logo">
-                    <?php if (!empty($restaurant['logo_url'])): ?>
-                        <img src="<?php echo e($restaurant['logo_url']); ?>" alt="<?php echo e($restaurant['name']); ?>">
+                    <?php if ($logo = restaurant_logo_src($restaurant)): ?>
+                        <img src="<?php echo e($logo); ?>" alt="<?php echo e($restaurant['name']); ?>">
                     <?php else: ?>
                         <span><?php echo e(substr($restaurant['name'], 0, 1)); ?></span>
                     <?php endif; ?>
