@@ -525,6 +525,107 @@ td small {
     margin-top: 6px;
 }
 
+.agenda-panel {
+    overflow: hidden;
+}
+
+.week-agenda {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(7, minmax(138px, 1fr));
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+
+.agenda-day {
+    background: linear-gradient(180deg, #fff, #fbfdfa);
+    border: 1px solid rgba(8, 83, 77, 0.12);
+    border-radius: 16px;
+    min-height: 250px;
+    padding: 12px;
+}
+
+.agenda-day.today {
+    border-color: rgba(214, 154, 45, 0.7);
+    box-shadow: inset 0 0 0 2px rgba(214, 154, 45, 0.18);
+}
+
+.agenda-day-header {
+    align-items: center;
+    border-bottom: 1px solid rgba(8, 83, 77, 0.1);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+}
+
+.agenda-day-header strong {
+    color: var(--primary-dark);
+    font-size: 14px;
+}
+
+.agenda-day-header span,
+.empty-day {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.agenda-items {
+    display: grid;
+    gap: 8px;
+}
+
+.agenda-reservation {
+    background: #fff;
+    border: 1px solid rgba(8, 83, 77, 0.12);
+    border-left: 5px solid var(--primary);
+    border-radius: 12px;
+    box-shadow: 0 10px 22px rgba(16, 32, 29, 0.07);
+    display: grid;
+    gap: 2px;
+    padding: 9px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.agenda-reservation:hover {
+    box-shadow: 0 14px 26px rgba(16, 32, 29, 0.11);
+    transform: translateY(-1px);
+}
+
+.agenda-reservation.status-pending {
+    border-left-color: var(--gold);
+}
+
+.agenda-reservation.status-cancelled,
+.agenda-reservation.status-no_show {
+    border-left-color: var(--danger);
+}
+
+.agenda-reservation.status-confirmed,
+.agenda-reservation.status-approved {
+    border-left-color: var(--success);
+}
+
+.agenda-time {
+    color: var(--gold);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.agenda-reservation strong {
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.agenda-reservation em,
+.agenda-reservation small {
+    color: var(--muted);
+    font-size: 12px;
+    font-style: normal;
+}
+
 .section-title {
     align-items: center;
     display: flex;

@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/../includes/header.php';
 
 $filter = isset($_GET['status']) ? $_GET['status'] : '';
+$reservationId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $sql = "SELECT r.*, rest.name restaurant_name, rest.whatsapp restaurant_whatsapp, COALESCE(o.name, 'Nenhuma') occasion_name, COALESCE(e.name, 'Sem preferência') environment_name, COALESCE(t.label, '-') table_label
         FROM reservations r
         INNER JOIN restaurants rest ON rest.id = r.restaurant_id
@@ -35,7 +36,10 @@ $sql = "SELECT r.*, rest.name restaurant_name, rest.whatsapp restaurant_whatsapp
         LEFT JOIN environments e ON e.id = r.environment_id
         LEFT JOIN tables_map t ON t.id = r.table_id";
 $params = array();
-if ($filter) {
+if ($reservationId) {
+    $sql .= ' WHERE r.id = ?';
+    $params[] = $reservationId;
+} elseif ($filter) {
     $sql .= ' WHERE r.status = ?';
     $params[] = $filter;
 }
@@ -51,6 +55,7 @@ $reservations = $stmt->fetchAll();
             <a href="reservas.php">Todas</a>
             <a href="reservas.php?status=pending">Pendentes</a>
             <a href="reservas.php?status=confirmed">Confirmadas</a>
+            <?php if ($reservationId): ?><a href="index.php">Voltar ao painel</a><?php endif; ?>
         </div>
     </div>
     <div class="reservation-list">

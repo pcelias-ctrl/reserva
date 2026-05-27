@@ -19,7 +19,7 @@ $isAdmin = isset($isAdmin) ? $isAdmin : false;
     </a>
     <nav>
         <?php if ($isAdmin): ?>
-            <a href="index.php">Cockpit</a>
+            <a href="index.php">Painel</a>
             <a href="reservas.php">Reservas</a>
             <a href="restaurantes.php">Restaurantes</a>
             <a href="configuracoes.php">Configurações</a>
