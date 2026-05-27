@@ -22,6 +22,15 @@ if (!$customerId && !empty($_POST['customer_password'])) {
     }
 }
 
+if (!$customerId) {
+    $stmt = $pdo->prepare('SELECT id FROM customers WHERE LOWER(email) = ?');
+    $stmt->execute(array(strtolower($email)));
+    $existingCustomer = $stmt->fetch();
+    if ($existingCustomer) {
+        $customerId = (int)$existingCustomer['id'];
+    }
+}
+
 $occasionId = !empty($_POST['occasion_id']) ? (int)$_POST['occasion_id'] : null;
 $restaurantId = !empty($_POST['restaurant_id']) ? (int)$_POST['restaurant_id'] : 0;
 $environmentId = !empty($_POST['environment_id']) ? (int)$_POST['environment_id'] : null;

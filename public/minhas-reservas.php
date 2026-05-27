@@ -4,6 +4,10 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_customer();
 
+$customer = current_customer();
+$customerId = (int)$customer['id'];
+$customerEmail = strtolower(trim($customer['email']));
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $action = isset($_POST['action']) ? $_POST['action'] : '';
@@ -23,8 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect_to('minhas-reservas.php');
         }
 
-        $stmt = $pdo->prepare('SELECT id, status FROM reservations WHERE id = ? AND customer_id = ?');
-        $stmt->execute(array($reservationId, $_SESSION['customer']['id']));
+        $stmt = $pdo->prepare('SELECT id, status FROM reservations WHERE id = ? AND (customer_id = ? OR LOWER(customer_email) = ?)');
+        $stmt->execute(array($reservationId, $customerId, $customerEmail));
         $reservation = $stmt->fetch();
 
         if (!$reservation || !in_array($reservation['status'], array('completed', 'no_show'), true)) {
@@ -32,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect_to('minhas-reservas.php');
         }
 
-        $stmt = $pdo->prepare('UPDATE reservations SET feedback_rating = ?, feedback_comment = ?, feedback_submitted_at = NOW() WHERE id = ? AND customer_id = ?');
-        $stmt->execute(array($rating, $comment, $reservationId, $_SESSION['customer']['id']));
+        $stmt = $pdo->prepare('UPDATE reservations SET customer_id = COALESCE(customer_id, ?), feedback_rating = ?, feedback_comment = ?, feedback_submitted_at = NOW() WHERE id = ? AND (customer_id = ? OR LOWER(customer_email) = ?)');
+        $stmt->execute(array($customerId, $rating, $comment, $reservationId, $customerId, $customerEmail));
         flash('success', 'Obrigado. Seu feedback foi enviado para o restaurante.');
     }
 
@@ -42,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/header.php';
 
-$stmt = $pdo->prepare("SELECT r.*, rest.name restaurant_name, COALESCE(o.name, 'Nenhuma') occasion_name FROM reservations r INNER JOIN restaurants rest ON rest.id = r.restaurant_id LEFT JOIN occasions o ON o.id = r.occasion_id WHERE r.customer_id = ? ORDER BY r.reservation_date DESC, r.reservation_time DESC");
-$stmt->execute(array($_SESSION['customer']['id']));
+$stmt = $pdo->prepare("SELECT r.*, rest.name restaurant_name, COALESCE(o.name, 'Nenhuma') occasion_name FROM reservations r INNER JOIN restaurants rest ON rest.id = r.restaurant_id LEFT JOIN occasions o ON o.id = r.occasion_id WHERE r.customer_id = ? OR LOWER(r.customer_email) = ? ORDER BY r.reservation_date DESC, r.reservation_time DESC");
+$stmt->execute(array($customerId, $customerEmail));
 $reservations = $stmt->fetchAll();
 ?>
 <section class="panel">
