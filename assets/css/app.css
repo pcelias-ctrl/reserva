@@ -690,8 +690,13 @@ td small {
 }
 
 .agenda-reservation.status-confirmed,
-.agenda-reservation.status-approved {
+.agenda-reservation.status-approved,
+.agenda-reservation.status-completed {
     border-left-color: var(--success);
+}
+
+.agenda-reservation.status-no_show {
+    border-left-color: var(--accent);
 }
 
 .agenda-time {
@@ -718,7 +723,7 @@ td small {
     border-top: 1px solid rgba(8, 83, 77, 0.1);
     display: grid;
     gap: 5px;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     margin-top: 7px;
     padding-top: 7px;
 }
@@ -931,6 +936,58 @@ html[data-config-tab="ocasioes"] #questionario > .panel:first-child {
 .reservation-card p {
     color: var(--muted);
     margin: 4px 0;
+}
+
+.customer-reservation-card {
+    grid-template-columns: 1fr;
+}
+
+.reservation-card-title {
+    align-items: start;
+    display: flex;
+    gap: 14px;
+    justify-content: space-between;
+}
+
+.feedback-box,
+.feedback-summary,
+.empty-state {
+    background: linear-gradient(180deg, #fffaf5, #eefbf5);
+    border: 1px solid rgba(8, 83, 77, 0.12);
+    border-radius: 16px;
+    display: grid;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 16px;
+}
+
+.feedback-box h3 {
+    margin-bottom: 4px;
+}
+
+.feedback-box p,
+.feedback-summary p,
+.feedback-sent,
+.empty-state p {
+    color: var(--muted);
+    margin: 0;
+}
+
+.feedback-summary strong,
+.feedback-summary span,
+.feedback-summary small {
+    display: block;
+}
+
+.feedback-summary span {
+    color: var(--primary-dark);
+    font-weight: 900;
+}
+
+.feedback-summary small,
+.feedback-sent {
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .status-form {
@@ -1476,6 +1533,10 @@ html[data-config-tab="ocasioes"] #questionario > .panel:first-child {
     .reservation-card {
         border-radius: 20px;
         padding: 16px;
+    }
+
+    .reservation-card-title {
+        flex-direction: column;
     }
 
     .status-form {

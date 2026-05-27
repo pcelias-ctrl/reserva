@@ -83,13 +83,13 @@ function build_whatsapp_url($phone, $message)
 function reservation_status_label($status)
 {
     $labels = array(
-        'pending' => 'Pendente',
-        'approved' => 'Aprovada',
-        'confirmed' => 'Confirmada',
-        'seated' => 'Na casa',
-        'completed' => 'Concluída',
-        'cancelled' => 'Cancelada',
-        'no_show' => 'Não compareceu'
+        'pending' => 'Aguardando aprovação',
+        'approved' => 'Confirmada (aprovada)',
+        'confirmed' => 'Confirmada (aprovada)',
+        'seated' => 'Confirmada (aprovada)',
+        'completed' => 'Concluída (mandar feedback)',
+        'cancelled' => 'Cancelada (não aprovada)',
+        'no_show' => 'Não compareceu (colher feedback)'
     );
     return isset($labels[$status]) ? $labels[$status] : $status;
 }

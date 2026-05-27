@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $id = (int)$_POST['id'];
     $status = $_POST['status'];
-    $allowed = array('pending','approved','confirmed','seated','completed','cancelled','no_show');
+    $allowed = array('pending','confirmed','cancelled','completed','no_show');
     if (in_array($status, $allowed, true)) {
         $stmt = $pdo->prepare('UPDATE reservations SET status = ? WHERE id = ?');
         $stmt->execute(array($status, $id));
@@ -53,8 +53,11 @@ $reservations = $stmt->fetchAll();
         <h1>Reservas</h1>
         <div class="filters">
             <a href="reservas.php">Todas</a>
-            <a href="reservas.php?status=pending">Pendentes</a>
+            <a href="reservas.php?status=pending">Aguardando aprovação</a>
             <a href="reservas.php?status=confirmed">Confirmadas</a>
+            <a href="reservas.php?status=cancelled">Canceladas</a>
+            <a href="reservas.php?status=completed">Concluídas</a>
+            <a href="reservas.php?status=no_show">Não compareceu</a>
             <?php if ($reservationId): ?><a href="index.php">Voltar ao painel</a><?php endif; ?>
         </div>
     </div>
@@ -68,12 +71,20 @@ $reservations = $stmt->fetchAll();
                     <p><?php echo e($reservation['restaurant_name']); ?> · <?php echo e($reservation['environment_name']); ?> · mesa <?php echo e($reservation['table_label']); ?> · <?php echo e($reservation['occasion_name']); ?></p>
                     <?php if ($reservation['dietary_restrictions']): ?><p><strong>Restrições:</strong> <?php echo e($reservation['dietary_restrictions']); ?></p><?php endif; ?>
                     <?php if ($reservation['notes']): ?><p><strong>Observações:</strong> <?php echo e($reservation['notes']); ?></p><?php endif; ?>
+                    <?php if (!empty($reservation['feedback_comment']) || !empty($reservation['feedback_rating'])): ?>
+                        <div class="feedback-summary">
+                            <strong>Feedback do cliente</strong>
+                            <?php if (!empty($reservation['feedback_rating'])): ?><span>Nota: <?php echo (int)$reservation['feedback_rating']; ?>/5</span><?php endif; ?>
+                            <?php if (!empty($reservation['feedback_comment'])): ?><p><?php echo nl2br(e($reservation['feedback_comment'])); ?></p><?php endif; ?>
+                            <?php if (!empty($reservation['feedback_submitted_at'])): ?><small>Enviado em <?php echo e(date('d/m/Y H:i', strtotime($reservation['feedback_submitted_at']))); ?></small><?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <form method="post" class="status-form">
                     <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
                     <input type="hidden" name="id" value="<?php echo (int)$reservation['id']; ?>">
                     <select name="status">
-                        <?php foreach (array('pending','approved','confirmed','seated','completed','cancelled','no_show') as $status): ?>
+                        <?php foreach (array('pending','confirmed','cancelled','completed','no_show') as $status): ?>
                             <option value="<?php echo e($status); ?>" <?php echo $reservation['status'] === $status ? 'selected' : ''; ?>><?php echo e(reservation_status_label($status)); ?></option>
                         <?php endforeach; ?>
                     </select>

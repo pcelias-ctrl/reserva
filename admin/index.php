@@ -8,11 +8,20 @@ require_admin();
 
 $viewOptions = array('week' => 7, 'fortnight' => 14, 'month' => 0);
 $viewLabels = array('week' => 'Semanal', 'fortnight' => 'Quinzenal', 'month' => 'Mensal');
-$statusLabels = array('all' => 'Todas', 'confirmed' => 'Confirmadas', 'to_confirm' => 'A confirmar', 'cancelled' => 'Canceladas');
+$statusLabels = array(
+    'all' => 'Todas',
+    'to_confirm' => 'Aguardando aprovação',
+    'confirmed' => 'Confirmadas',
+    'cancelled' => 'Canceladas',
+    'completed' => 'Concluídas',
+    'no_show' => 'Não compareceu'
+);
 $statusGroups = array(
     'confirmed' => array('approved', 'confirmed'),
     'to_confirm' => array('pending'),
-    'cancelled' => array('cancelled', 'no_show')
+    'cancelled' => array('cancelled'),
+    'completed' => array('completed'),
+    'no_show' => array('no_show')
 );
 
 $view = isset($_GET['view']) && isset($viewOptions[$_GET['view']]) ? $_GET['view'] : 'week';
@@ -49,14 +58,35 @@ function panel_url($params)
 function feedback_message($reservation)
 {
     $restaurant = !empty($reservation['restaurant_name']) ? $reservation['restaurant_name'] : 'nosso restaurante';
+    $dateLine = 'Reserva: ' . date('d/m/Y', strtotime($reservation['reservation_date'])) . ' às ' . substr($reservation['reservation_time'], 0, 5);
+
+    if ($reservation['status'] === 'no_show') {
+        $lines = array(
+            'Olá, ' . $reservation['customer_name'] . '.',
+            '',
+            'Poxa, notamos que você não veio na data escolhida para sua reserva no ' . $restaurant . '.',
+            '',
+            'Quer agendar uma nova data? Conte o que aconteceu para que a equipe possa cuidar melhor do próximo contato.',
+            '',
+            'Você também pode acessar sua área no i-Reserva e registrar seu feedback diretamente na reserva.',
+            '',
+            $dateLine,
+            '',
+            'Estamos à disposição para receber você em outro momento.'
+        );
+        return implode("\n", $lines);
+    }
+
     $lines = array(
         'Olá, ' . $reservation['customer_name'] . '!',
         '',
-        'Obrigado por escolher o ' . $restaurant . '. Foi um prazer receber sua reserva pelo i-Reserva.',
+        'Obrigado por escolher o ' . $restaurant . '. Deu tudo certo na sua experiência?',
         '',
-        'Se puder, responda esta mensagem contando como foi sua experiência. Seu feedback ajuda o restaurante a melhorar cada detalhe do atendimento.',
+        'Queremos muito ouvir você: conte como foi a visita e o que podemos melhorar para tornar o próximo atendimento ainda melhor.',
         '',
-        'Reserva: ' . date('d/m/Y', strtotime($reservation['reservation_date'])) . ' às ' . substr($reservation['reservation_time'], 0, 5),
+        'Você também pode acessar sua área no i-Reserva e registrar seu feedback diretamente na reserva.',
+        '',
+        $dateLine,
         '',
         'Até a próxima!'
     );
@@ -90,10 +120,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/../includes/header.php';
 
 $cards = array(
-    'pending' => 'Pendentes',
-    'approved' => 'Aprovadas',
+    'pending' => 'Aguardando aprovação',
     'confirmed' => 'Confirmadas',
-    'seated' => 'Na casa'
+    'cancelled' => 'Canceladas',
+    'completed' => 'Concluídas',
+    'no_show' => 'Não compareceu'
 );
 $counts = array();
 foreach ($cards as $status => $label) {
@@ -201,15 +232,17 @@ foreach ($stmt->fetchAll() as $reservation) {
                                 <em><?php echo (int)$reservation['party_size']; ?> lugares · <?php echo e($reservation['restaurant_name']); ?></em>
                                 <small><?php echo e(reservation_status_label($reservation['status'])); ?></small>
                             </a>
-                            <div class="agenda-actions">
-                                <form method="post">
-                                    <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
-                                    <input type="hidden" name="action" value="send_feedback_email">
-                                    <input type="hidden" name="reservation_id" value="<?php echo (int)$reservation['id']; ?>">
-                                    <button type="submit">E-mail</button>
-                                </form>
-                                <a target="_blank" rel="noopener" href="<?php echo e(build_whatsapp_url($reservation['customer_phone'], feedback_message($reservation))); ?>">WhatsApp</a>
-                            </div>
+                            <?php if (in_array($reservation['status'], array('completed', 'no_show'), true)): ?>
+                                <div class="agenda-actions">
+                                    <form method="post">
+                                        <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                                        <input type="hidden" name="action" value="send_feedback_email">
+                                        <input type="hidden" name="reservation_id" value="<?php echo (int)$reservation['id']; ?>">
+                                        <button type="submit">Feedback por e-mail</button>
+                                    </form>
+                                    <a target="_blank" rel="noopener" href="<?php echo e(build_whatsapp_url($reservation['customer_phone'], feedback_message($reservation))); ?>">Feedback WhatsApp</a>
+                                </div>
+                            <?php endif; ?>
                         </article>
                     <?php endforeach; ?>
                 </div>
