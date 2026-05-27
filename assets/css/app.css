@@ -60,20 +60,15 @@ a {
 
 .brand {
     align-items: center;
-    color: var(--primary-dark);
     display: inline-flex;
-    font-size: 20px;
-    font-weight: 800;
-    gap: 10px;
+    flex: 0 0 auto;
+    line-height: 0;
 }
 
-.brand::before {
-    background: linear-gradient(135deg, var(--accent), var(--gold));
-    border-radius: 12px;
-    content: "";
-    display: inline-block;
-    height: 28px;
-    width: 28px;
+.brand img {
+    display: block;
+    height: 44px;
+    width: auto;
 }
 
 .topbar nav {
@@ -776,13 +771,12 @@ td small {
     }
 
     .brand {
-        font-size: 18px;
+        max-width: 154px;
     }
 
-    .brand::before {
-        border-radius: 10px;
-        height: 24px;
-        width: 24px;
+    .brand img {
+        height: auto;
+        max-width: 154px;
     }
 
     .topbar nav {

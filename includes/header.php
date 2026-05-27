@@ -9,11 +9,14 @@ $isAdmin = isset($isAdmin) ? $isAdmin : false;
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php echo e($title); ?></title>
+    <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../assets/css/app.css">
 </head>
 <body class="<?php echo $isAdmin ? 'admin-shell' : 'public-shell'; ?>">
 <header class="topbar">
-    <a class="brand" href="<?php echo $isAdmin ? 'index.php' : 'index.php'; ?>">i_Reserva</a>
+    <a class="brand" href="<?php echo $isAdmin ? 'index.php' : 'index.php'; ?>" aria-label="i_Reserva">
+        <img src="../assets/img/logo-ireserva.svg" alt="i_Reserva">
+    </a>
     <nav>
         <?php if ($isAdmin): ?>
             <a href="index.php">Cockpit</a>
