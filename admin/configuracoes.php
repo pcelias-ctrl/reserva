@@ -15,10 +15,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('success', 'Ocasião cadastrada.');
     }
 
+    if ($action === 'update_occasion') {
+        $stmt = $pdo->prepare('UPDATE occasions SET name = ?, asks_birthday = ?, status = ? WHERE id = ?');
+        $stmt->execute(array(trim($_POST['name']), isset($_POST['asks_birthday']) ? 1 : 0, $_POST['status'], (int)$_POST['occasion_id']));
+        flash('success', 'Ocasião atualizada.');
+        redirect_to('configuracoes.php#ocasioes');
+    }
+
+    if ($action === 'delete_occasion') {
+        $stmt = $pdo->prepare('DELETE FROM occasions WHERE id = ?');
+        $stmt->execute(array((int)$_POST['occasion_id']));
+        flash('success', 'Ocasião excluída.');
+        redirect_to('configuracoes.php#ocasioes');
+    }
+
     if ($action === 'question') {
         $stmt = $pdo->prepare('INSERT INTO questionnaire_questions (label, field_type, options_text, is_required, sort_order) VALUES (?, ?, ?, ?, ?)');
         $stmt->execute(array(trim($_POST['label']), $_POST['field_type'], trim($_POST['options_text']), isset($_POST['is_required']) ? 1 : 0, (int)$_POST['sort_order']));
         flash('success', 'Pergunta cadastrada.');
+    }
+
+    if ($action === 'update_question') {
+        $stmt = $pdo->prepare('UPDATE questionnaire_questions SET label = ?, field_type = ?, options_text = ?, is_required = ?, sort_order = ?, status = ? WHERE id = ?');
+        $stmt->execute(array(trim($_POST['label']), $_POST['field_type'], trim($_POST['options_text']), isset($_POST['is_required']) ? 1 : 0, (int)$_POST['sort_order'], $_POST['status'], (int)$_POST['question_id']));
+        flash('success', 'Pergunta atualizada.');
+        redirect_to('configuracoes.php#questionario');
+    }
+
+    if ($action === 'delete_question') {
+        $stmt = $pdo->prepare('DELETE FROM questionnaire_questions WHERE id = ?');
+        $stmt->execute(array((int)$_POST['question_id']));
+        flash('success', 'Pergunta excluída.');
+        redirect_to('configuracoes.php#questionario');
     }
 
     if ($action === 'environment') {
@@ -309,9 +337,38 @@ function table_visual_layout($table)
             <label class="check"><input type="checkbox" name="is_required" value="1"> Obrigatória</label>
             <button class="button primary" type="submit">Adicionar pergunta</button>
         </form>
-        <div class="pill-list">
+        <div class="editable-list">
             <?php foreach ($questions as $question): ?>
-                <span><?php echo e($question['label']); ?> - <?php echo e($question['field_type']); ?></span>
+                <form method="post" class="editable-card">
+                    <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                    <input type="hidden" name="question_id" value="<?php echo (int)$question['id']; ?>">
+                    <label>Pergunta <input type="text" name="label" required value="<?php echo e($question['label']); ?>"></label>
+                    <div class="grid two">
+                        <label>Tipo
+                            <select name="field_type">
+                                <option value="text" <?php echo $question['field_type'] === 'text' ? 'selected' : ''; ?>>Texto curto</option>
+                                <option value="textarea" <?php echo $question['field_type'] === 'textarea' ? 'selected' : ''; ?>>Texto longo</option>
+                                <option value="select" <?php echo $question['field_type'] === 'select' ? 'selected' : ''; ?>>Seleção</option>
+                                <option value="checkbox" <?php echo $question['field_type'] === 'checkbox' ? 'selected' : ''; ?>>Sim/Não</option>
+                            </select>
+                        </label>
+                        <label>Ordem <input type="number" name="sort_order" value="<?php echo (int)$question['sort_order']; ?>"></label>
+                    </div>
+                    <label>Opções para seleção <textarea name="options_text" rows="3" placeholder="Uma opção por linha"><?php echo e($question['options_text']); ?></textarea></label>
+                    <div class="grid two">
+                        <label>Status
+                            <select name="status">
+                                <option value="active" <?php echo $question['status'] === 'active' ? 'selected' : ''; ?>>Ativa</option>
+                                <option value="inactive" <?php echo $question['status'] === 'inactive' ? 'selected' : ''; ?>>Inativa</option>
+                            </select>
+                        </label>
+                        <label class="check"><input type="checkbox" name="is_required" value="1" <?php echo $question['is_required'] ? 'checked' : ''; ?>> Obrigatória</label>
+                    </div>
+                    <div class="table-card-actions">
+                        <button class="button ghost" type="submit" name="action" value="update_question">Salvar pergunta</button>
+                        <button class="button danger" type="submit" name="action" value="delete_question" formnovalidate onclick="return confirm('Excluir esta pergunta? As respostas antigas vinculadas a ela também serão removidas.');">Excluir</button>
+                    </div>
+                </form>
             <?php endforeach; ?>
         </div>
     </div>
@@ -325,9 +382,26 @@ function table_visual_layout($table)
             <label class="check"><input type="checkbox" name="asks_birthday" value="1"> Solicitar dia e mês do aniversário</label>
             <button class="button primary" type="submit">Adicionar ocasião</button>
         </form>
-        <div class="pill-list">
+        <div class="editable-list">
             <?php foreach ($occasions as $occasion): ?>
-                <span><?php echo e($occasion['name']); ?><?php echo $occasion['asks_birthday'] ? ' - aniversário' : ''; ?></span>
+                <form method="post" class="editable-card">
+                    <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                    <input type="hidden" name="occasion_id" value="<?php echo (int)$occasion['id']; ?>">
+                    <label>Nome <input type="text" name="name" required value="<?php echo e($occasion['name']); ?>"></label>
+                    <div class="grid two">
+                        <label>Status
+                            <select name="status">
+                                <option value="active" <?php echo $occasion['status'] === 'active' ? 'selected' : ''; ?>>Ativa</option>
+                                <option value="inactive" <?php echo $occasion['status'] === 'inactive' ? 'selected' : ''; ?>>Inativa</option>
+                            </select>
+                        </label>
+                        <label class="check"><input type="checkbox" name="asks_birthday" value="1" <?php echo $occasion['asks_birthday'] ? 'checked' : ''; ?>> Solicitar aniversário</label>
+                    </div>
+                    <div class="table-card-actions">
+                        <button class="button ghost" type="submit" name="action" value="update_occasion">Salvar ocasião</button>
+                        <button class="button danger" type="submit" name="action" value="delete_occasion" formnovalidate onclick="return confirm('Excluir esta ocasião? Reservas antigas ficarão sem ocasião definida.');">Excluir</button>
+                    </div>
+                </form>
             <?php endforeach; ?>
         </div>
     </div>
