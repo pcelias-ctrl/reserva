@@ -69,6 +69,23 @@ if (!reservation_flex_table_exists($pdo, 'occupancy_extra_tables')) {
     );
 }
 
+if (!reservation_flex_table_exists($pdo, 'occupancy_table_overrides')) {
+    $pdo->exec(
+        "CREATE TABLE occupancy_table_overrides (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          layout_date DATE NOT NULL,
+          environment_id INT NOT NULL,
+          table_id INT NOT NULL,
+          seats INT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+          UNIQUE KEY uniq_occupancy_table_override (layout_date, environment_id, table_id),
+          CONSTRAINT fk_table_override_environment FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE CASCADE,
+          CONSTRAINT fk_table_override_table FOREIGN KEY (table_id) REFERENCES tables_map(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    );
+}
+
 if (!reservation_flex_column_nullable($pdo, 'occupancy_assignments', 'table_id')) {
     try {
         $pdo->exec('ALTER TABLE occupancy_assignments DROP FOREIGN KEY fk_occupancy_assignment_table');

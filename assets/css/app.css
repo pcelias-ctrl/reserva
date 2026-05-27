@@ -1084,6 +1084,14 @@ td small {
     border-bottom: 1px solid rgba(8, 83, 77, 0.1);
 }
 
+.clear-layout-form {
+    margin-bottom: 12px;
+}
+
+.clear-layout-form .button {
+    width: 100%;
+}
+
 .extra-table-form {
     background: linear-gradient(180deg, #fffaf5, #eefbf5);
     border: 0;

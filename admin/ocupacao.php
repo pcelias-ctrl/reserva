@@ -47,6 +47,38 @@ function parse_table_keys($values)
     return $result;
 }
 
+function refresh_source_table_override($pdo, $layoutDate, $environmentId, $sourceTableId)
+{
+    if (!$sourceTableId) {
+        return;
+    }
+
+    $stmt = $pdo->prepare('SELECT seats FROM tables_map WHERE id = ? AND environment_id = ?');
+    $stmt->execute(array($sourceTableId, $environmentId));
+    $source = $stmt->fetch();
+    if (!$source) {
+        return;
+    }
+
+    $stmt = $pdo->prepare('SELECT COALESCE(SUM(seats), 0) split_seats FROM occupancy_extra_tables WHERE layout_date = ? AND environment_id = ? AND source_table_id = ?');
+    $stmt->execute(array($layoutDate, $environmentId, $sourceTableId));
+    $splitSeats = (int)$stmt->fetch()['split_seats'];
+
+    if ($splitSeats > 0) {
+        $adjustedSeats = max(1, (int)$source['seats'] - $splitSeats);
+        $stmt = $pdo->prepare(
+            'INSERT INTO occupancy_table_overrides (layout_date, environment_id, table_id, seats)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE seats = VALUES(seats)'
+        );
+        $stmt->execute(array($layoutDate, $environmentId, $sourceTableId, $adjustedSeats));
+        return;
+    }
+
+    $stmt = $pdo->prepare('DELETE FROM occupancy_table_overrides WHERE layout_date = ? AND environment_id = ? AND table_id = ?');
+    $stmt->execute(array($layoutDate, $environmentId, $sourceTableId));
+}
+
 $selectedDate = valid_date_or_today(isset($_GET['date']) ? $_GET['date'] : date('Y-m-d'));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -73,6 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'create_extra_table') {
+        $sourceTableId = !empty($_POST['source_table_id']) ? (int)$_POST['source_table_id'] : null;
+        $extraSeats = max(1, (int)$_POST['seats']);
         $stmt = $pdo->prepare(
             'INSERT INTO occupancy_extra_tables (layout_date, environment_id, label, shape, seats, position_x, position_y, source_table_id)
              VALUES (?, ?, ?, ?, ?, 80, 80, ?)'
@@ -82,18 +116,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $environmentId,
             trim($_POST['label']),
             $_POST['shape'] === 'round' ? 'round' : 'square',
-            max(1, (int)$_POST['seats']),
-            !empty($_POST['source_table_id']) ? (int)$_POST['source_table_id'] : null
+            $extraSeats,
+            $sourceTableId
         ));
+        refresh_source_table_override($pdo, $layoutDate, $environmentId, $sourceTableId);
         flash('success', 'Mesa separada criada para este dia.');
         redirect_to(occupancy_url(array('date' => $layoutDate, 'environment_id' => $environmentId)));
     }
 
     if ($action === 'delete_extra_table') {
         $extraTableId = (int)$_POST['extra_table_id'];
+        $stmt = $pdo->prepare('SELECT source_table_id FROM occupancy_extra_tables WHERE id = ? AND layout_date = ? AND environment_id = ?');
+        $stmt->execute(array($extraTableId, $layoutDate, $environmentId));
+        $extraTable = $stmt->fetch();
+        $sourceTableId = $extraTable ? (int)$extraTable['source_table_id'] : null;
         $pdo->prepare('DELETE FROM occupancy_assignments WHERE extra_table_id = ? AND layout_date = ?')->execute(array($extraTableId, $layoutDate));
         $pdo->prepare('DELETE FROM occupancy_extra_tables WHERE id = ? AND layout_date = ? AND environment_id = ?')->execute(array($extraTableId, $layoutDate, $environmentId));
+        refresh_source_table_override($pdo, $layoutDate, $environmentId, $sourceTableId);
         flash('success', 'Mesa separada removida deste dia.');
+        redirect_to(occupancy_url(array('date' => $layoutDate, 'environment_id' => $environmentId)));
+    }
+
+    if ($action === 'clear_daily_layout') {
+        $pdo->prepare('DELETE FROM occupancy_assignments WHERE layout_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
+        $pdo->prepare('DELETE FROM occupancy_extra_tables WHERE layout_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
+        $pdo->prepare('DELETE FROM occupancy_table_overrides WHERE layout_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
+        $pdo->prepare('DELETE FROM occupancy_layouts WHERE layout_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
+        $pdo->prepare('UPDATE reservations SET environment_id = NULL, table_id = NULL WHERE reservation_date = ? AND environment_id = ?')->execute(array($layoutDate, $environmentId));
+        flash('success', 'Layout do dia limpo. O ambiente voltou ao desenho original.');
         redirect_to(occupancy_url(array('date' => $layoutDate, 'environment_id' => $environmentId)));
     }
 
@@ -185,13 +235,14 @@ $baseTables = array();
 $extraTables = array();
 if ($selectedEnvironmentId) {
     $stmt = $pdo->prepare(
-        "SELECT t.*, COALESCE(ol.position_x, t.position_x) daily_x, COALESCE(ol.position_y, t.position_y) daily_y, 'base' table_kind
+        "SELECT t.*, COALESCE(oto.seats, t.seats) seats, COALESCE(ol.position_x, t.position_x) daily_x, COALESCE(ol.position_y, t.position_y) daily_y, 'base' table_kind
          FROM tables_map t
          LEFT JOIN occupancy_layouts ol ON ol.table_id = t.id AND ol.environment_id = t.environment_id AND ol.layout_date = ?
+         LEFT JOIN occupancy_table_overrides oto ON oto.table_id = t.id AND oto.environment_id = t.environment_id AND oto.layout_date = ?
          WHERE t.environment_id = ? AND t.status = 'active'
          ORDER BY t.label"
     );
-    $stmt->execute(array($selectedDate, $selectedEnvironmentId));
+    $stmt->execute(array($selectedDate, $selectedDate, $selectedEnvironmentId));
     $baseTables = $stmt->fetchAll();
 
     $stmt = $pdo->prepare("SELECT *, position_x daily_x, position_y daily_y, 'extra' table_kind FROM occupancy_extra_tables WHERE layout_date = ? AND environment_id = ? ORDER BY label");
@@ -206,12 +257,13 @@ if ($selectedEnvironmentId) {
     $stmt = $pdo->prepare(
         "SELECT oa.*, r.customer_name, r.party_size, r.reservation_time,
                 COALESCE(t.label, et.label) table_label,
-                COALESCE(t.seats, et.seats) seats,
+                COALESCE(oto.seats, t.seats, et.seats) seats,
                 CASE WHEN oa.extra_table_id IS NULL THEN 'base' ELSE 'extra' END table_kind,
                 COALESCE(oa.table_id, oa.extra_table_id) table_ref_id
          FROM occupancy_assignments oa
          INNER JOIN reservations r ON r.id = oa.reservation_id
          LEFT JOIN tables_map t ON t.id = oa.table_id
+         LEFT JOIN occupancy_table_overrides oto ON oto.table_id = t.id AND oto.environment_id = oa.environment_id AND oto.layout_date = oa.layout_date
          LEFT JOIN occupancy_extra_tables et ON et.id = oa.extra_table_id
          WHERE oa.layout_date = ? AND oa.environment_id = ?"
     );
@@ -288,6 +340,13 @@ foreach ($restaurants as $restaurant) {
         <div class="section-title"><div><p class="eyebrow"><?php echo e(date('d/m/Y', strtotime($selectedDate))); ?></p><h2>Reservas do dia</h2><p class="muted-line"><?php echo e($restaurantName); ?></p></div></div>
 
         <?php if ($selectedEnvironment): ?>
+            <form method="post" class="clear-layout-form" onsubmit="return confirm('Limpar o layout deste dia? As mesas separadas, posições e alocações deste ambiente serão removidas.');">
+                <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                <input type="hidden" name="action" value="clear_daily_layout">
+                <input type="hidden" name="layout_date" value="<?php echo e($selectedDate); ?>">
+                <input type="hidden" name="environment_id" value="<?php echo (int)$selectedEnvironmentId; ?>">
+                <button class="button danger" type="submit">Limpar layout do dia</button>
+            </form>
             <details class="extra-table-drawer">
                 <summary>Separar ou ajustar mesas do dia</summary>
             <form method="post" class="extra-table-form">
