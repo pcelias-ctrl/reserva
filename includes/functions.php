@@ -82,7 +82,8 @@ function build_whatsapp_url($phone, $message)
 
 function restaurant_logo_src($restaurant)
 {
-    if (!empty($restaurant['logo_mime'])) {
+    $hasLogo = !empty($restaurant['has_logo']) || (!array_key_exists('has_logo', $restaurant) && !empty($restaurant['logo_mime']));
+    if ($hasLogo) {
         return '/logo.php?id=' . (int)$restaurant['id'];
     }
     if (!empty($restaurant['logo_url'])) {

@@ -13,5 +13,5 @@ if (!$logo || empty($logo['logo_data'])) {
 }
 
 header('Content-Type: ' . $logo['logo_mime']);
-header('Cache-Control: public, max-age=3600');
+header('Cache-Control: public, max-age=60');
 echo $logo['logo_data'];

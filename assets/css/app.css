@@ -296,6 +296,16 @@ textarea {
     background: var(--primary-soft);
 }
 
+.button.danger {
+    background: #fff;
+    border-color: rgba(180, 35, 24, 0.24);
+    color: var(--danger);
+}
+
+.button.danger:hover {
+    background: #fff0ee;
+}
+
 .alert {
     border-radius: 12px;
     font-weight: 700;
@@ -449,6 +459,7 @@ td small {
     height: 64px;
     justify-content: center;
     overflow: hidden;
+    position: relative;
     width: 64px;
 }
 
@@ -459,9 +470,33 @@ td small {
 }
 
 .restaurant-logo img {
+    background: #fff;
     height: 100%;
     object-fit: contain;
+    position: absolute;
+    inset: 0;
     width: 100%;
+}
+
+.restaurant-logo strong {
+    display: block;
+}
+
+.logo-preview-row {
+    align-items: center;
+    background: var(--primary-soft);
+    border: 1px solid rgba(8, 83, 77, 0.12);
+    border-radius: 14px;
+    color: var(--primary-dark);
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 12px;
+}
+
+.logo-preview-row p {
+    font-weight: 800;
+    margin: 0;
 }
 
 .metric span {
@@ -676,6 +711,35 @@ td small {
     margin: 0;
 }
 
+.table-title-group {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+}
+
+.table-shape-preview {
+    background: linear-gradient(135deg, #fff, var(--primary-soft));
+    border: 2px solid var(--primary);
+    box-shadow: 0 8px 18px rgba(16, 32, 29, 0.08);
+    display: inline-block;
+    height: 34px;
+    width: 34px;
+}
+
+.table-shape-preview.square {
+    border-radius: 9px;
+}
+
+.table-shape-preview.round {
+    border-radius: 999px;
+}
+
+.table-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
 .pill-list {
     display: flex;
     flex-wrap: wrap;
@@ -716,16 +780,21 @@ td small {
     align-items: center;
     background: #fff;
     border: 2px solid var(--primary);
-    border-radius: 14px;
+    border-radius: 16px;
     box-shadow: 0 10px 22px rgba(16, 32, 29, 0.08);
     color: var(--ink);
     cursor: move;
     display: grid;
-    height: 76px;
+    height: 88px;
     justify-items: center;
     padding: 8px;
     position: absolute;
-    width: 96px;
+    width: 88px;
+}
+
+.map-table.square {
+    aspect-ratio: 1;
+    border-radius: 16px;
 }
 
 .map-table.round {

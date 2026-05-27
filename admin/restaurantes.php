@@ -85,10 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/header.php';
 
-$restaurants = $pdo->query('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, address, reservation_message, status, created_at FROM restaurants ORDER BY status, name')->fetchAll();
+$restaurants = $pdo->query('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, address, reservation_message, status, created_at FROM restaurants ORDER BY status, name')->fetchAll();
 $edit = null;
 if (!empty($_GET['id'])) {
-    $stmt = $pdo->prepare('SELECT * FROM restaurants WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, address, reservation_message, status, created_at FROM restaurants WHERE id = ?');
     $stmt->execute(array((int)$_GET['id']));
     $edit = $stmt->fetch();
 }
@@ -140,7 +140,14 @@ if (!empty($_GET['id'])) {
             <label>Upload da foto/logo
                 <input type="file" name="logo_file" accept="image/png,image/jpeg,image/webp,image/gif">
             </label>
-            <?php if ($edit && !empty($edit['logo_mime'])): ?>
+            <?php if ($edit && !empty($edit['has_logo'])): ?>
+                <div class="logo-preview-row">
+                    <span class="restaurant-logo">
+                        <strong><?php echo e(substr($edit['name'], 0, 1)); ?></strong>
+                        <img src="<?php echo e(restaurant_logo_src($edit)); ?>" alt="<?php echo e($edit['name']); ?>" onerror="this.style.display='none'; this.parentElement.classList.add('logo-fallback');">
+                    </span>
+                    <p>Logo salvo no banco de dados.</p>
+                </div>
                 <label class="check"><input type="checkbox" name="remove_logo" value="1"> Remover logo salvo no banco</label>
             <?php endif; ?>
             <label>Endereco
@@ -158,9 +165,10 @@ if (!empty($_GET['id'])) {
             <article class="restaurant-card">
                 <div class="restaurant-logo">
                     <?php if ($logo = restaurant_logo_src($restaurant)): ?>
-                        <img src="<?php echo e($logo); ?>" alt="<?php echo e($restaurant['name']); ?>">
+                        <strong><?php echo e(substr($restaurant['name'], 0, 1)); ?></strong>
+                        <img src="<?php echo e($logo); ?>" alt="<?php echo e($restaurant['name']); ?>" onerror="this.style.display='none'; this.parentElement.classList.add('logo-fallback');">
                     <?php else: ?>
-                        <span><?php echo e(substr($restaurant['name'], 0, 1)); ?></span>
+                        <strong><?php echo e(substr($restaurant['name'], 0, 1)); ?></strong>
                     <?php endif; ?>
                 </div>
                 <div>

@@ -46,12 +46,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare('INSERT INTO tables_map (environment_id, label, shape, seats, position_x, position_y) VALUES (?, ?, ?, ?, 40, 40)');
         $stmt->execute(array((int)$_POST['environment_id'], trim($_POST['label']), $_POST['shape'], (int)$_POST['seats']));
         flash('success', 'Mesa cadastrada.');
+        redirect_to('configuracoes.php?environment_id=' . (int)$_POST['environment_id']);
     }
 
     if ($action === 'update_table') {
         $stmt = $pdo->prepare('UPDATE tables_map SET label = ?, shape = ?, seats = ?, status = ? WHERE id = ?');
         $stmt->execute(array(trim($_POST['label']), $_POST['shape'], (int)$_POST['seats'], $_POST['status'], (int)$_POST['table_id']));
         flash('success', 'Mesa atualizada.');
+        redirect_to('configuracoes.php?environment_id=' . (int)$_POST['environment_id']);
+    }
+
+    if ($action === 'delete_table') {
+        $stmt = $pdo->prepare('DELETE FROM tables_map WHERE id = ? AND environment_id = ?');
+        $stmt->execute(array((int)$_POST['table_id'], (int)$_POST['environment_id']));
+        flash('success', 'Mesa excluida.');
         redirect_to('configuracoes.php?environment_id=' . (int)$_POST['environment_id']);
     }
 
@@ -221,11 +229,13 @@ if ($selectedEnvironmentId) {
             <?php foreach ($tables as $table): ?>
                 <form method="post" class="table-editor-card">
                     <div class="table-card-title">
-                        <h3>Mesa <?php echo e($table['label']); ?></h3>
+                        <div class="table-title-group">
+                            <span class="table-shape-preview <?php echo e($table['shape']); ?>"></span>
+                            <h3>Mesa <?php echo e($table['label']); ?></h3>
+                        </div>
                         <span class="badge"><?php echo (int)$table['seats']; ?> lugares</span>
                     </div>
                     <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
-                    <input type="hidden" name="action" value="update_table">
                     <input type="hidden" name="environment_id" value="<?php echo (int)$selectedEnvironment['id']; ?>">
                     <input type="hidden" name="table_id" value="<?php echo (int)$table['id']; ?>">
                     <label>Identificacao <input type="text" name="label" required value="<?php echo e($table['label']); ?>"></label>
@@ -244,7 +254,10 @@ if ($selectedEnvironmentId) {
                             <option value="inactive" <?php echo $table['status'] === 'inactive' ? 'selected' : ''; ?>>Inativa</option>
                         </select>
                     </label>
-                    <button class="button ghost" type="submit">Salvar mesa</button>
+                    <div class="table-card-actions">
+                        <button class="button ghost" type="submit" name="action" value="update_table">Salvar mesa</button>
+                        <button class="button danger" type="submit" name="action" value="delete_table" formnovalidate onclick="return confirm('Excluir esta mesa? Reservas vinculadas ficarao sem mesa definida.');">Excluir</button>
+                    </div>
                 </form>
             <?php endforeach; ?>
         </div>
