@@ -36,35 +36,50 @@ Array.prototype.forEach.call(tabButtons, function (button) {
 });
 activateConfigTab();
 
+function tablePointerPosition(event, table) {
+    var map = table.parentElement;
+    var rect = map.getBoundingClientRect();
+    return {
+        x: event.clientX - rect.left - offsetX,
+        y: event.clientY - rect.top - offsetY
+    };
+}
+
 document.querySelectorAll('.map-table').forEach(function (table) {
-    table.addEventListener('mousedown', function (event) {
+    table.addEventListener('pointerdown', function (event) {
         activeTable = table;
-        offsetX = event.clientX - table.offsetLeft;
-        offsetY = event.clientY - table.offsetTop;
+        var tableRect = table.getBoundingClientRect();
+        offsetX = event.clientX - tableRect.left;
+        offsetY = event.clientY - tableRect.top;
         table.classList.add('dragging');
+        table.setPointerCapture(event.pointerId);
+        event.preventDefault();
     });
 });
 
-document.addEventListener('mousemove', function (event) {
+document.addEventListener('pointermove', function (event) {
     if (!activeTable) {
         return;
     }
     var map = activeTable.parentElement;
-    var x = event.clientX - offsetX;
-    var y = event.clientY - offsetY;
-    x = Math.max(0, Math.min(x, map.clientWidth - activeTable.offsetWidth));
-    y = Math.max(0, Math.min(y, map.clientHeight - activeTable.offsetHeight));
+    var position = tablePointerPosition(event, activeTable);
+    var x = Math.max(0, Math.min(position.x, map.clientWidth - activeTable.offsetWidth));
+    var y = Math.max(0, Math.min(position.y, map.clientHeight - activeTable.offsetHeight));
     activeTable.style.left = x + 'px';
     activeTable.style.top = y + 'px';
+    event.preventDefault();
 });
 
-document.addEventListener('mouseup', function () {
+document.addEventListener('pointerup', function (event) {
     if (!activeTable) {
         return;
     }
     var table = activeTable;
     var map = table.parentElement;
     table.classList.remove('dragging');
+    if (table.hasPointerCapture && table.hasPointerCapture(event.pointerId)) {
+        table.releasePointerCapture(event.pointerId);
+    }
     activeTable = null;
 
     var body = new URLSearchParams();
