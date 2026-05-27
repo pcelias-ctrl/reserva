@@ -15,7 +15,7 @@ $isAdmin = isset($isAdmin) ? $isAdmin : false;
 <body class="<?php echo $isAdmin ? 'admin-shell' : 'public-shell'; ?>">
 <header class="topbar">
     <a class="brand" href="<?php echo $isAdmin ? 'index.php' : 'index.php'; ?>" aria-label="i-Reserva">
-        <img src="../assets/img/logo-ireserva.svg" alt="i-Reserva">
+        <img src="../assets/img/logo-ireserva.png" alt="i-Reserva">
     </a>
     <nav>
         <?php if ($isAdmin): ?>

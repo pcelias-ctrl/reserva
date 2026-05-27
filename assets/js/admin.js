@@ -2,6 +2,40 @@ var activeTable = null;
 var offsetX = 0;
 var offsetY = 0;
 
+var tabButtons = document.querySelectorAll('.config-tabs button[data-tab]');
+var configSections = document.querySelectorAll('.config-section');
+
+function activateConfigTab(tab) {
+    if (!tabButtons.length) {
+        return;
+    }
+    var activeTab = tab || (window.location.hash ? window.location.hash.replace('#', '') : 'layout');
+    document.documentElement.setAttribute('data-config-tab', activeTab);
+    if (activeTab === 'ocasioes') {
+        var questionnaireSection = document.getElementById('questionario');
+        if (questionnaireSection) {
+            questionnaireSection.classList.add('active');
+        }
+    }
+    Array.prototype.forEach.call(tabButtons, function (button) {
+        button.classList.toggle('active', button.getAttribute('data-tab') === activeTab);
+    });
+    Array.prototype.forEach.call(configSections, function (section) {
+        var isActive = section.id === activeTab || (activeTab === 'ocasioes' && section.id === 'questionario');
+        section.classList.toggle('active', isActive);
+    });
+    if (window.location.hash !== '#' + activeTab) {
+        history.replaceState(null, '', '#' + activeTab);
+    }
+}
+
+Array.prototype.forEach.call(tabButtons, function (button) {
+    button.addEventListener('click', function () {
+        activateConfigTab(button.getAttribute('data-tab'));
+    });
+});
+activateConfigTab();
+
 document.querySelectorAll('.map-table').forEach(function (table) {
     table.addEventListener('mousedown', function (event) {
         activeTable = table;

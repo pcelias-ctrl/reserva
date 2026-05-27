@@ -49,6 +49,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect_to('configuracoes.php#questionario');
     }
 
+    if ($action === 'save_hours') {
+        $restaurantId = (int)$_POST['restaurant_id'];
+        $stmt = $pdo->prepare(
+            'INSERT INTO restaurant_hours (restaurant_id, weekday, period, opens_at, closes_at, is_closed)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE opens_at = VALUES(opens_at), closes_at = VALUES(closes_at), is_closed = VALUES(is_closed)'
+        );
+        foreach ($_POST['hours'] as $weekday => $periods) {
+            foreach ($periods as $period => $values) {
+                $isClosed = !empty($values['closed']) ? 1 : 0;
+                $opensAt = $isClosed ? null : ($values['open'] ?: null);
+                $closesAt = $isClosed ? null : ($values['close'] ?: null);
+                $stmt->execute(array($restaurantId, (int)$weekday, $period, $opensAt, $closesAt, $isClosed));
+            }
+        }
+        flash('success', 'Horários atualizados.');
+        redirect_to('configuracoes.php?hours_restaurant_id=' . $restaurantId . '#horarios');
+    }
+
     if ($action === 'environment') {
         $stmt = $pdo->prepare('INSERT INTO environments (restaurant_id, name, description, width, height) VALUES (?, ?, ?, ?, ?)');
         $stmt->execute(array((int)$_POST['restaurant_id'], trim($_POST['name']), trim($_POST['description']), (int)$_POST['width'], (int)$_POST['height']));
@@ -134,6 +153,33 @@ function table_visual_layout($table)
     }
     return (int)$table['seats'] >= 4 ? 'rectangle' : 'square';
 }
+
+$weekdays = array(
+    0 => 'Domingo',
+    1 => 'Segunda',
+    2 => 'Terça',
+    3 => 'Quarta',
+    4 => 'Quinta',
+    5 => 'Sexta',
+    6 => 'Sábado'
+);
+$periods = array('lunch' => 'Almoço', 'dinner' => 'Jantar');
+$hoursRestaurantId = isset($_GET['hours_restaurant_id']) ? (int)$_GET['hours_restaurant_id'] : (isset($restaurants[0]) ? (int)$restaurants[0]['id'] : 0);
+$restaurantHours = array();
+if ($hoursRestaurantId) {
+    $stmt = $pdo->prepare('SELECT * FROM restaurant_hours WHERE restaurant_id = ?');
+    $stmt->execute(array($hoursRestaurantId));
+    foreach ($stmt->fetchAll() as $hour) {
+        $restaurantHours[(int)$hour['weekday']][$hour['period']] = $hour;
+    }
+}
+
+function default_hour($period)
+{
+    return $period === 'lunch'
+        ? array('opens_at' => '12:00:00', 'closes_at' => '15:00:00', 'is_closed' => 0)
+        : array('opens_at' => '19:00:00', 'closes_at' => '23:00:00', 'is_closed' => 0);
+}
 ?>
 <section class="dashboard-hero compact-hero">
     <div>
@@ -143,12 +189,13 @@ function table_visual_layout($table)
 </section>
 
 <section class="config-tabs">
-    <a href="#layout">Layout de mesas</a>
-    <a href="#questionario">Questionário</a>
-    <a href="#ocasioes">Ocasiões</a>
+    <button type="button" data-tab="layout">Layout de mesas</button>
+    <button type="button" data-tab="horarios">Horários</button>
+    <button type="button" data-tab="questionario">Questionário</button>
+    <button type="button" data-tab="ocasioes">Ocasiões</button>
 </section>
 
-<section class="panel layout-console" id="layout">
+<section class="panel layout-console config-section" id="layout">
     <div class="section-title">
         <div>
             <p class="eyebrow">Mapa operacional</p>
@@ -315,7 +362,53 @@ function table_visual_layout($table)
     <?php endif; ?>
 </section>
 
-<section class="settings-grid" id="questionario">
+<section class="panel config-section" id="horarios">
+    <div class="section-title">
+        <div>
+            <p class="eyebrow">Funcionamento</p>
+            <h2>Horários por restaurante</h2>
+            <p class="muted-line">Configure almoço e jantar separadamente. Marque fechado quando o restaurante não atender no período.</p>
+        </div>
+        <form method="get" class="inline-form environment-switcher">
+            <label>Restaurante
+                <select name="hours_restaurant_id" onchange="this.form.submit()">
+                    <?php foreach ($restaurants as $restaurant): ?>
+                        <option value="<?php echo (int)$restaurant['id']; ?>" <?php echo $hoursRestaurantId === (int)$restaurant['id'] ? 'selected' : ''; ?>><?php echo e($restaurant['name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+        </form>
+    </div>
+
+    <?php if ($hoursRestaurantId): ?>
+        <form method="post" class="hours-grid">
+            <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+            <input type="hidden" name="action" value="save_hours">
+            <input type="hidden" name="restaurant_id" value="<?php echo (int)$hoursRestaurantId; ?>">
+            <?php foreach ($weekdays as $weekday => $weekdayLabel): ?>
+                <div class="hours-day">
+                    <h3><?php echo e($weekdayLabel); ?></h3>
+                    <?php foreach ($periods as $period => $periodLabel): ?>
+                        <?php $hour = isset($restaurantHours[$weekday][$period]) ? $restaurantHours[$weekday][$period] : default_hour($period); ?>
+                        <div class="hours-period">
+                            <strong><?php echo e($periodLabel); ?></strong>
+                            <label>Abertura
+                                <input type="time" name="hours[<?php echo (int)$weekday; ?>][<?php echo e($period); ?>][open]" value="<?php echo e(substr((string)$hour['opens_at'], 0, 5)); ?>">
+                            </label>
+                            <label>Fechamento
+                                <input type="time" name="hours[<?php echo (int)$weekday; ?>][<?php echo e($period); ?>][close]" value="<?php echo e(substr((string)$hour['closes_at'], 0, 5)); ?>">
+                            </label>
+                            <label class="check"><input type="checkbox" name="hours[<?php echo (int)$weekday; ?>][<?php echo e($period); ?>][closed]" value="1" <?php echo !empty($hour['is_closed']) ? 'checked' : ''; ?>> Fechado</label>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endforeach; ?>
+            <button class="button primary" type="submit">Salvar horários</button>
+        </form>
+    <?php endif; ?>
+</section>
+
+<section class="settings-grid config-section" id="questionario">
     <div class="panel">
         <div class="section-title"><div><p class="eyebrow">Experiência do cliente</p><h2>Questionário</h2></div></div>
         <form method="post" class="config-form">
@@ -373,7 +466,7 @@ function table_visual_layout($table)
         </div>
     </div>
 
-    <div class="panel" id="ocasioes">
+    <div class="panel config-section" id="ocasioes">
         <div class="section-title"><div><p class="eyebrow">Momentos especiais</p><h2>Ocasiões</h2></div></div>
         <form method="post">
             <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">

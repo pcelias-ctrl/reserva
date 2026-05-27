@@ -90,6 +90,20 @@ CREATE TABLE tables_map (
   CONSTRAINT fk_table_environment FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE restaurant_hours (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  restaurant_id INT NOT NULL,
+  weekday TINYINT NOT NULL,
+  period ENUM('lunch','dinner') NOT NULL,
+  opens_at TIME NULL,
+  closes_at TIME NULL,
+  is_closed TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_restaurant_hours (restaurant_id, weekday, period),
+  CONSTRAINT fk_hours_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE reservations (
   id INT AUTO_INCREMENT PRIMARY KEY,
   restaurant_id INT NOT NULL,
@@ -155,3 +169,19 @@ INSERT INTO tables_map (environment_id, label, shape, seats, position_x, positio
 (1, 'M02', 'square', 4, 210, 90),
 (1, 'M03', 'round', 6, 360, 140),
 (2, 'V01', 'square', 4, 90, 90);
+
+INSERT INTO restaurant_hours (restaurant_id, weekday, period, opens_at, closes_at, is_closed) VALUES
+(1, 0, 'lunch', '12:00:00', '15:00:00', 0),
+(1, 0, 'dinner', '19:00:00', '23:00:00', 0),
+(1, 1, 'lunch', '12:00:00', '15:00:00', 0),
+(1, 1, 'dinner', '19:00:00', '23:00:00', 0),
+(1, 2, 'lunch', '12:00:00', '15:00:00', 0),
+(1, 2, 'dinner', '19:00:00', '23:00:00', 0),
+(1, 3, 'lunch', '12:00:00', '15:00:00', 0),
+(1, 3, 'dinner', '19:00:00', '23:00:00', 0),
+(1, 4, 'lunch', '12:00:00', '15:00:00', 0),
+(1, 4, 'dinner', '19:00:00', '23:00:00', 0),
+(1, 5, 'lunch', '12:00:00', '15:00:00', 0),
+(1, 5, 'dinner', '19:00:00', '23:00:00', 0),
+(1, 6, 'lunch', '12:00:00', '15:00:00', 0),
+(1, 6, 'dinner', '19:00:00', '23:00:00', 0);

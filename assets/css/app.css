@@ -67,7 +67,7 @@ a {
 
 .brand img {
     display: block;
-    height: 44px;
+    height: 50px;
     width: auto;
 }
 
@@ -548,14 +548,37 @@ td small {
     margin-bottom: 18px;
 }
 
-.config-tabs a {
+.config-tabs a,
+.config-tabs button {
     background: #fff;
     border: 1px solid rgba(8, 83, 77, 0.12);
     border-radius: 999px;
     color: var(--primary-dark);
+    cursor: pointer;
     font-size: 14px;
     font-weight: 800;
     padding: 10px 14px;
+}
+
+.config-tabs button.active {
+    background: var(--primary-dark);
+    color: #fff;
+}
+
+.config-section {
+    display: none;
+}
+
+.config-section.active {
+    display: block;
+}
+
+.settings-grid.config-section.active {
+    display: grid;
+}
+
+html[data-config-tab="ocasioes"] #questionario > .panel:first-child {
+    display: none;
 }
 
 .layout-console {
@@ -790,6 +813,36 @@ td small {
     padding: 14px;
 }
 
+.hours-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.hours-day {
+    background: linear-gradient(180deg, #fff, #fbfdfa);
+    border: 1px solid rgba(8, 83, 77, 0.12);
+    border-radius: 16px;
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+}
+
+.hours-day h3 {
+    margin: 0;
+}
+
+.hours-period {
+    align-items: end;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 90px repeat(3, minmax(0, 1fr));
+}
+
+.hours-period strong {
+    color: var(--primary-dark);
+    padding-bottom: 11px;
+}
+
 .compact-list {
     color: var(--muted);
     margin: 16px 0 0;
@@ -1017,12 +1070,12 @@ td small {
     }
 
     .brand {
-        max-width: 154px;
+        max-width: 190px;
     }
 
     .brand img {
         height: auto;
-        max-width: 154px;
+        max-width: 190px;
     }
 
     .topbar nav {
@@ -1223,6 +1276,15 @@ td small {
     .environment-switcher label {
         width: 100%;
         min-width: 0;
+    }
+
+    .hours-period {
+        align-items: stretch;
+        grid-template-columns: 1fr;
+    }
+
+    .hours-period strong {
+        padding-bottom: 0;
     }
 
     .floor-map {

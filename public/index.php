@@ -7,6 +7,18 @@ $occasions = $pdo->query("SELECT * FROM occasions WHERE status = 'active' ORDER 
 $questions = $pdo->query("SELECT * FROM questionnaire_questions WHERE status = 'active' ORDER BY sort_order, id")->fetchAll();
 $restaurants = $pdo->query("SELECT id, name, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, IF(logo_data IS NULL, NULL, MD5(logo_data)) AS logo_version, address FROM restaurants WHERE status = 'active' ORDER BY name")->fetchAll();
 $environments = $pdo->query("SELECT e.*, r.name restaurant_name FROM environments e INNER JOIN restaurants r ON r.id = e.restaurant_id WHERE e.status = 'active' AND r.status = 'active' ORDER BY r.name, e.name")->fetchAll();
+$hoursRows = $pdo->query("SELECT restaurant_id, weekday, period, opens_at, closes_at, is_closed FROM restaurant_hours ORDER BY restaurant_id, weekday, period")->fetchAll();
+$availability = array();
+foreach ($hoursRows as $row) {
+    if (!empty($row['is_closed']) || !$row['opens_at'] || !$row['closes_at']) {
+        continue;
+    }
+    $availability[(int)$row['restaurant_id']][(int)$row['weekday']][] = array(
+        'period' => $row['period'],
+        'open' => substr($row['opens_at'], 0, 5),
+        'close' => substr($row['closes_at'], 0, 5)
+    );
+}
 $customer = current_customer();
 ?>
 
@@ -53,7 +65,9 @@ $customer = current_customer();
                 <input type="date" name="reservation_date" required min="<?php echo date('Y-m-d'); ?>">
             </label>
             <label>Horário
-                <input type="time" name="reservation_time" required>
+                <select name="reservation_time" id="reservationTime" required>
+                    <option value="">Escolha restaurante e data</option>
+                </select>
             </label>
             <label>Número de pessoas
                 <input type="number" name="party_size" min="1" max="40" required>
@@ -161,5 +175,8 @@ $customer = current_customer();
     </section>
 </form>
 
+<script>
+window.restaurantAvailability = <?php echo json_encode($availability); ?>;
+</script>
 <script src="../assets/js/public.js"></script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
