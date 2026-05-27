@@ -37,6 +37,15 @@ if (!table_exists($pdo, 'restaurants')) {
           logo_url VARCHAR(500) NULL,
           logo_mime VARCHAR(80) NULL,
           logo_data MEDIUMBLOB NULL,
+          smtp_enabled TINYINT(1) NOT NULL DEFAULT 0,
+          smtp_host VARCHAR(180) NULL,
+          smtp_port INT NULL DEFAULT 587,
+          smtp_username VARCHAR(180) NULL,
+          smtp_password VARCHAR(255) NULL,
+          smtp_encryption ENUM('tls','ssl','none') NOT NULL DEFAULT 'tls',
+          smtp_from_email VARCHAR(180) NULL,
+          smtp_from_name VARCHAR(180) NULL,
+          smtp_admin_email VARCHAR(180) NULL,
           address TEXT NULL,
           reservation_message TEXT NULL,
           status ENUM('active','inactive') NOT NULL DEFAULT 'active',
@@ -51,6 +60,19 @@ if (!column_exists($pdo, 'restaurants', 'logo_mime')) {
 
 if (!column_exists($pdo, 'restaurants', 'logo_data')) {
     $pdo->exec('ALTER TABLE restaurants ADD logo_data MEDIUMBLOB NULL AFTER logo_mime');
+}
+
+if (!column_exists($pdo, 'restaurants', 'smtp_enabled')) {
+    $pdo->exec("ALTER TABLE restaurants
+        ADD smtp_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER logo_data,
+        ADD smtp_host VARCHAR(180) NULL AFTER smtp_enabled,
+        ADD smtp_port INT NULL DEFAULT 587 AFTER smtp_host,
+        ADD smtp_username VARCHAR(180) NULL AFTER smtp_port,
+        ADD smtp_password VARCHAR(255) NULL AFTER smtp_username,
+        ADD smtp_encryption ENUM('tls','ssl','none') NOT NULL DEFAULT 'tls' AFTER smtp_password,
+        ADD smtp_from_email VARCHAR(180) NULL AFTER smtp_encryption,
+        ADD smtp_from_name VARCHAR(180) NULL AFTER smtp_from_email,
+        ADD smtp_admin_email VARCHAR(180) NULL AFTER smtp_from_name");
 }
 
 $stmt = $pdo->query('SELECT COUNT(*) total FROM restaurants');

@@ -80,6 +80,20 @@ function build_whatsapp_url($phone, $message)
     return 'https://wa.me/' . $digits . '?text=' . rawurlencode($message);
 }
 
+function reservation_status_label($status)
+{
+    $labels = array(
+        'pending' => 'Pendente',
+        'approved' => 'Aprovada',
+        'confirmed' => 'Confirmada',
+        'seated' => 'Na casa',
+        'completed' => 'Concluída',
+        'cancelled' => 'Cancelada',
+        'no_show' => 'Não compareceu'
+    );
+    return isset($labels[$status]) ? $labels[$status] : $status;
+}
+
 function restaurant_logo_src($restaurant)
 {
     $hasLogo = !empty($restaurant['has_logo']) || (!array_key_exists('has_logo', $restaurant) && !empty($restaurant['logo_mime']));

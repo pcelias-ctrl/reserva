@@ -76,7 +76,7 @@ if (!empty($_POST['answers']) && is_array($_POST['answers'])) {
     }
 }
 
-$stmt = $pdo->prepare("SELECT r.*, COALESCE(o.name, 'Nenhuma') AS occasion_name, rest.name restaurant_name, rest.whatsapp restaurant_whatsapp, rest.reservation_message FROM reservations r INNER JOIN restaurants rest ON rest.id = r.restaurant_id LEFT JOIN occasions o ON o.id = r.occasion_id WHERE r.id = ?");
+$stmt = $pdo->prepare("SELECT r.*, COALESCE(o.name, 'Nenhuma') AS occasion_name, rest.name restaurant_name, rest.whatsapp restaurant_whatsapp, rest.reservation_message, rest.smtp_enabled, rest.smtp_host, rest.smtp_port, rest.smtp_username, rest.smtp_password, rest.smtp_encryption, rest.smtp_from_email, rest.smtp_from_name, rest.smtp_admin_email FROM reservations r INNER JOIN restaurants rest ON rest.id = r.restaurant_id LEFT JOIN occasions o ON o.id = r.occasion_id WHERE r.id = ?");
 $stmt->execute(array($reservationId));
 $reservation = $stmt->fetch();
 notify_reservation_created($reservation, $answerLabels);

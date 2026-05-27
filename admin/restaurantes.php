@@ -39,31 +39,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         trim($_POST['logo_url']),
         trim($_POST['address']),
         trim($_POST['reservation_message']),
-        $_POST['status']
+        $_POST['status'],
+        isset($_POST['smtp_enabled']) ? 1 : 0,
+        trim($_POST['smtp_host']),
+        (int)$_POST['smtp_port'],
+        trim($_POST['smtp_username']),
+        trim($_POST['smtp_encryption']),
+        trim($_POST['smtp_from_email']),
+        trim($_POST['smtp_from_name']),
+        trim($_POST['smtp_admin_email'])
     );
+    $smtpPassword = trim($_POST['smtp_password']);
 
     if ($id) {
+        if ($smtpPassword !== '') {
+            $payload[] = $smtpPassword;
+            $smtpPasswordSql = ', smtp_password = ?';
+        } else {
+            $smtpPasswordSql = '';
+        }
+
         if ($hasUpload) {
             $payload[] = $logoMime;
             $payload[] = $logoData;
             $payload[] = $id;
             $stmt = $pdo->prepare(
                 'UPDATE restaurants
-                 SET name = ?, legal_name = ?, document_number = ?, email = ?, phone = ?, whatsapp = ?, logo_url = ?, address = ?, reservation_message = ?, status = ?, logo_mime = ?, logo_data = ?
+                 SET name = ?, legal_name = ?, document_number = ?, email = ?, phone = ?, whatsapp = ?, logo_url = ?, address = ?, reservation_message = ?, status = ?, smtp_enabled = ?, smtp_host = ?, smtp_port = ?, smtp_username = ?, smtp_encryption = ?, smtp_from_email = ?, smtp_from_name = ?, smtp_admin_email = ?' . $smtpPasswordSql . ', logo_mime = ?, logo_data = ?
                  WHERE id = ?'
             );
         } elseif (!empty($_POST['remove_logo'])) {
             $payload[] = $id;
             $stmt = $pdo->prepare(
                 'UPDATE restaurants
-                 SET name = ?, legal_name = ?, document_number = ?, email = ?, phone = ?, whatsapp = ?, logo_url = ?, address = ?, reservation_message = ?, status = ?, logo_mime = NULL, logo_data = NULL
+                 SET name = ?, legal_name = ?, document_number = ?, email = ?, phone = ?, whatsapp = ?, logo_url = ?, address = ?, reservation_message = ?, status = ?, smtp_enabled = ?, smtp_host = ?, smtp_port = ?, smtp_username = ?, smtp_encryption = ?, smtp_from_email = ?, smtp_from_name = ?, smtp_admin_email = ?' . $smtpPasswordSql . ', logo_mime = NULL, logo_data = NULL
                  WHERE id = ?'
             );
         } else {
             $payload[] = $id;
             $stmt = $pdo->prepare(
                 'UPDATE restaurants
-                 SET name = ?, legal_name = ?, document_number = ?, email = ?, phone = ?, whatsapp = ?, logo_url = ?, address = ?, reservation_message = ?, status = ?
+                 SET name = ?, legal_name = ?, document_number = ?, email = ?, phone = ?, whatsapp = ?, logo_url = ?, address = ?, reservation_message = ?, status = ?, smtp_enabled = ?, smtp_host = ?, smtp_port = ?, smtp_username = ?, smtp_encryption = ?, smtp_from_email = ?, smtp_from_name = ?, smtp_admin_email = ?' . $smtpPasswordSql . '
                  WHERE id = ?'
             );
         }
@@ -71,11 +87,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('success', $hasUpload ? 'Restaurante atualizado. Logo novo salvo no banco de dados.' : 'Restaurante atualizado.');
         redirect_to('restaurantes.php?id=' . $id);
     } else {
+        $payload[] = $smtpPassword;
         $payload[] = $logoMime;
         $payload[] = $logoData;
         $stmt = $pdo->prepare(
-            'INSERT INTO restaurants (name, legal_name, document_number, email, phone, whatsapp, logo_url, address, reservation_message, status, logo_mime, logo_data)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO restaurants (name, legal_name, document_number, email, phone, whatsapp, logo_url, address, reservation_message, status, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_encryption, smtp_from_email, smtp_from_name, smtp_admin_email, smtp_password, logo_mime, logo_data)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute($payload);
         flash('success', 'Restaurante cadastrado.');
@@ -85,10 +102,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/header.php';
 
-$restaurants = $pdo->query('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, IF(logo_data IS NULL, NULL, MD5(logo_data)) AS logo_version, address, reservation_message, status, created_at FROM restaurants ORDER BY status, name')->fetchAll();
+$restaurants = $pdo->query('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, IF(logo_data IS NULL, NULL, MD5(logo_data)) AS logo_version, address, reservation_message, status, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_encryption, smtp_from_email, smtp_from_name, smtp_admin_email, created_at FROM restaurants ORDER BY status, name')->fetchAll();
 $edit = null;
 if (!empty($_GET['id'])) {
-    $stmt = $pdo->prepare('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, IF(logo_data IS NULL, NULL, MD5(logo_data)) AS logo_version, address, reservation_message, status, created_at FROM restaurants WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, IF(logo_data IS NULL, NULL, MD5(logo_data)) AS logo_version, address, reservation_message, status, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password, smtp_encryption, smtp_from_email, smtp_from_name, smtp_admin_email, created_at FROM restaurants WHERE id = ?');
     $stmt->execute(array((int)$_GET['id']));
     $edit = $stmt->fetch();
 }
@@ -156,6 +173,53 @@ if (!empty($_GET['id'])) {
             <label>Mensagem padrão da reserva
                 <textarea name="reservation_message" rows="3"><?php echo e($edit ? $edit['reservation_message'] : 'Nova reserva recebida pelo Reserva On-line.'); ?></textarea>
             </label>
+            <div class="smtp-box">
+                <div class="section-title">
+                    <div>
+                        <p class="eyebrow">E-mail</p>
+                        <h2>SMTP do restaurante</h2>
+                    </div>
+                </div>
+                <label class="check"><input type="checkbox" name="smtp_enabled" value="1" <?php echo $edit && !empty($edit['smtp_enabled']) ? 'checked' : ''; ?>> Usar SMTP próprio para este restaurante</label>
+                <div class="grid two">
+                    <label>Servidor SMTP
+                        <input type="text" name="smtp_host" placeholder="smtp.gmail.com" value="<?php echo e($edit ? $edit['smtp_host'] : ''); ?>">
+                    </label>
+                    <label>Porta
+                        <input type="number" name="smtp_port" value="<?php echo e($edit && $edit['smtp_port'] ? $edit['smtp_port'] : 587); ?>">
+                    </label>
+                </div>
+                <div class="grid two">
+                    <label>Usuário
+                        <input type="text" name="smtp_username" placeholder="reservas@restaurante.com" value="<?php echo e($edit ? $edit['smtp_username'] : ''); ?>">
+                    </label>
+                    <label>Senha
+                        <input type="password" name="smtp_password" placeholder="<?php echo $edit && !empty($edit['smtp_password']) ? 'Deixe vazio para manter a senha atual' : 'Senha SMTP ou senha de app'; ?>">
+                    </label>
+                </div>
+                <div class="grid two">
+                    <label>Segurança
+                        <select name="smtp_encryption">
+                            <?php $smtpEncryption = $edit && $edit['smtp_encryption'] ? $edit['smtp_encryption'] : 'tls'; ?>
+                            <option value="tls" <?php echo $smtpEncryption === 'tls' ? 'selected' : ''; ?>>TLS</option>
+                            <option value="ssl" <?php echo $smtpEncryption === 'ssl' ? 'selected' : ''; ?>>SSL</option>
+                            <option value="none" <?php echo $smtpEncryption === 'none' ? 'selected' : ''; ?>>Nenhuma</option>
+                        </select>
+                    </label>
+                    <label>E-mail de destino administrativo
+                        <input type="email" name="smtp_admin_email" placeholder="reservas@restaurante.com" value="<?php echo e($edit ? $edit['smtp_admin_email'] : ''); ?>">
+                    </label>
+                </div>
+                <div class="grid two">
+                    <label>Remetente
+                        <input type="email" name="smtp_from_email" placeholder="reservas@restaurante.com" value="<?php echo e($edit ? $edit['smtp_from_email'] : ''); ?>">
+                    </label>
+                    <label>Nome do remetente
+                        <input type="text" name="smtp_from_name" placeholder="Nome do restaurante" value="<?php echo e($edit ? $edit['smtp_from_name'] : ''); ?>">
+                    </label>
+                </div>
+                <p class="muted-line">Para Gmail ou Google Workspace, use senha de app. A senha preenchida substitui a anterior; em branco, ela permanece igual.</p>
+            </div>
             <button class="button primary" type="submit"><?php echo $edit ? 'Salvar restaurante' : 'Cadastrar restaurante'; ?></button>
         </form>
     </div>

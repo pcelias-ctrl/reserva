@@ -14,11 +14,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (in_array($status, $allowed, true)) {
         $stmt = $pdo->prepare('UPDATE reservations SET status = ? WHERE id = ?');
         $stmt->execute(array($status, $id));
-        $stmt = $pdo->prepare('SELECT * FROM reservations WHERE id = ?');
+        $stmt = $pdo->prepare('SELECT r.*, rest.smtp_enabled, rest.smtp_host, rest.smtp_port, rest.smtp_username, rest.smtp_password, rest.smtp_encryption, rest.smtp_from_email, rest.smtp_from_name FROM reservations r INNER JOIN restaurants rest ON rest.id = r.restaurant_id WHERE r.id = ?');
         $stmt->execute(array($id));
         $reservation = $stmt->fetch();
         if ($reservation) {
-            send_reservation_email($reservation['customer_email'], 'Atualização da sua reserva', 'Sua reserva agora está com status: ' . $status);
+            send_reservation_email($reservation['customer_email'], 'Atualização da sua reserva', 'Sua reserva agora está com status: ' . reservation_status_label($status), $reservation);
         }
         flash('success', 'Reserva atualizada.');
     }
@@ -69,10 +69,10 @@ $reservations = $stmt->fetchAll();
                     <input type="hidden" name="id" value="<?php echo (int)$reservation['id']; ?>">
                     <select name="status">
                         <?php foreach (array('pending','approved','confirmed','seated','completed','cancelled','no_show') as $status): ?>
-                            <option value="<?php echo e($status); ?>" <?php echo $reservation['status'] === $status ? 'selected' : ''; ?>><?php echo e($status); ?></option>
+                            <option value="<?php echo e($status); ?>" <?php echo $reservation['status'] === $status ? 'selected' : ''; ?>><?php echo e(reservation_status_label($status)); ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <button class="button primary" type="submit">Salvar</button>
+                    <button class="button primary" type="submit">Salvar ação</button>
                     <a class="button whatsapp" target="_blank" rel="noopener" href="<?php echo e(build_whatsapp_url($reservation['restaurant_whatsapp'], reservation_whatsapp_message($reservation))); ?>">WhatsApp</a>
                 </form>
             </article>

@@ -499,6 +499,20 @@ td small {
     margin: 0;
 }
 
+.smtp-box {
+    background: linear-gradient(180deg, #fff, #fbfdfa);
+    border: 1px solid rgba(8, 83, 77, 0.12);
+    border-radius: 16px;
+    display: grid;
+    gap: 12px;
+    margin: 18px 0;
+    padding: 16px;
+}
+
+.smtp-box .section-title {
+    margin-bottom: 0;
+}
+
 .metric span {
     color: var(--muted);
     display: block;

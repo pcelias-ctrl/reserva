@@ -57,7 +57,7 @@ $agenda = $stmt->fetchAll();
                     <td><?php echo (int)$reservation['party_size']; ?></td>
                     <td><?php echo e($reservation['environment_name']); ?></td>
                     <td><?php echo e($reservation['occasion_name']); ?></td>
-                    <td><span class="badge"><?php echo e($reservation['status']); ?></span></td>
+                    <td><span class="badge"><?php echo e(reservation_status_label($reservation['status'])); ?></span></td>
                     <td><a class="button ghost" href="reservas.php?id=<?php echo (int)$reservation['id']; ?>">Abrir</a></td>
                 </tr>
             <?php endforeach; ?>

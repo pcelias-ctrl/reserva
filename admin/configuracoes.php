@@ -42,6 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect_to('configuracoes.php?environment_id=' . (int)$_POST['environment_id']);
     }
 
+    if ($action === 'delete_environment') {
+        $stmt = $pdo->prepare('DELETE FROM environments WHERE id = ?');
+        $stmt->execute(array((int)$_POST['environment_id']));
+        flash('success', 'Ambiente excluído.');
+        redirect_to('configuracoes.php');
+    }
+
     if ($action === 'table') {
         $stmt = $pdo->prepare('INSERT INTO tables_map (environment_id, label, shape, seats, position_x, position_y) VALUES (?, ?, ?, ?, 40, 40)');
         $stmt->execute(array((int)$_POST['environment_id'], trim($_POST['label']), $_POST['shape'], (int)$_POST['seats']));
@@ -147,7 +154,6 @@ function table_visual_layout($table)
             <form method="post" class="config-card">
                 <div class="card-heading"><span>01</span><h3>Editar ambiente</h3></div>
                 <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
-                <input type="hidden" name="action" value="update_environment">
                 <input type="hidden" name="environment_id" value="<?php echo (int)$selectedEnvironment['id']; ?>">
                 <label>Restaurante
                     <select name="restaurant_id" required>
@@ -168,7 +174,10 @@ function table_visual_layout($table)
                         <option value="inactive" <?php echo $selectedEnvironment['status'] === 'inactive' ? 'selected' : ''; ?>>Inativo</option>
                     </select>
                 </label>
-                <button class="button primary" type="submit">Salvar ambiente</button>
+                <div class="table-card-actions">
+                    <button class="button primary" type="submit" name="action" value="update_environment">Salvar ambiente</button>
+                    <button class="button danger" type="submit" name="action" value="delete_environment" formnovalidate onclick="return confirm('Excluir este ambiente? As mesas dele serão removidas e as reservas vinculadas ficarão sem ambiente definido.');">Excluir ambiente</button>
+                </div>
             </form>
         <?php endif; ?>
 

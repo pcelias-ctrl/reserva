@@ -22,7 +22,7 @@ $reservations = $stmt->fetchAll();
                     <td><?php echo e(substr($reservation['reservation_time'], 0, 5)); ?></td>
                     <td><?php echo (int)$reservation['party_size']; ?></td>
                     <td><?php echo e($reservation['occasion_name']); ?></td>
-                    <td><span class="badge"><?php echo e($reservation['status']); ?></span></td>
+                    <td><span class="badge"><?php echo e(reservation_status_label($reservation['status'])); ?></span></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
