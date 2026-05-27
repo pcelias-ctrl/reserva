@@ -12,10 +12,12 @@ function occupancy_table_layout($table)
 
 function occupancy_url($params)
 {
+    global $selectedDate, $selectedRestaurantId, $selectedEnvironmentId;
+
     $base = array(
-        'date' => isset($_GET['date']) ? $_GET['date'] : date('Y-m-d'),
-        'restaurant_id' => isset($_GET['restaurant_id']) ? (int)$_GET['restaurant_id'] : 0,
-        'environment_id' => isset($_GET['environment_id']) ? (int)$_GET['environment_id'] : 0
+        'date' => isset($selectedDate) ? $selectedDate : (isset($_GET['date']) ? $_GET['date'] : date('Y-m-d')),
+        'restaurant_id' => isset($selectedRestaurantId) ? (int)$selectedRestaurantId : (isset($_GET['restaurant_id']) ? (int)$_GET['restaurant_id'] : 0),
+        'environment_id' => isset($selectedEnvironmentId) ? (int)$selectedEnvironmentId : (isset($_GET['environment_id']) ? (int)$_GET['environment_id'] : 0)
     );
     return 'ocupacao.php?' . http_build_query(array_merge($base, $params));
 }
@@ -142,11 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/../includes/header.php';
 
 $restaurants = $pdo->query("SELECT * FROM restaurants WHERE status = 'active' ORDER BY name")->fetchAll();
-$selectedRestaurantId = isset($_GET['restaurant_id']) ? (int)$_GET['restaurant_id'] : (isset($restaurants[0]) ? (int)$restaurants[0]['id'] : 0);
+$selectedRestaurantId = isset($_GET['restaurant_id']) && (int)$_GET['restaurant_id'] > 0 ? (int)$_GET['restaurant_id'] : (isset($restaurants[0]) ? (int)$restaurants[0]['id'] : 0);
 $stmt = $pdo->prepare("SELECT * FROM environments WHERE restaurant_id = ? AND status = 'active' ORDER BY name");
 $stmt->execute(array($selectedRestaurantId));
 $environments = $stmt->fetchAll();
-$selectedEnvironmentId = isset($_GET['environment_id']) ? (int)$_GET['environment_id'] : (isset($environments[0]) ? (int)$environments[0]['id'] : 0);
+$selectedEnvironmentId = isset($_GET['environment_id']) && (int)$_GET['environment_id'] > 0 ? (int)$_GET['environment_id'] : (isset($environments[0]) ? (int)$environments[0]['id'] : 0);
 $selectedEnvironment = null;
 foreach ($environments as $environment) {
     if ((int)$environment['id'] === $selectedEnvironmentId) {
@@ -286,12 +288,15 @@ foreach ($restaurants as $restaurant) {
         <div class="section-title"><div><p class="eyebrow"><?php echo e(date('d/m/Y', strtotime($selectedDate))); ?></p><h2>Reservas do dia</h2><p class="muted-line"><?php echo e($restaurantName); ?></p></div></div>
 
         <?php if ($selectedEnvironment): ?>
+            <details class="extra-table-drawer">
+                <summary>Separar ou ajustar mesas do dia</summary>
             <form method="post" class="extra-table-form">
                 <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
                 <input type="hidden" name="action" value="create_extra_table">
                 <input type="hidden" name="layout_date" value="<?php echo e($selectedDate); ?>">
                 <input type="hidden" name="environment_id" value="<?php echo (int)$selectedEnvironmentId; ?>">
-                <h3>Separar mesa do dia</h3>
+                <h3>Mesa operacional para esta data</h3>
+                <p class="muted-line">Use quando precisar dividir uma mesa, criar uma composição temporária ou ajustar o mapa sem mexer no cadastro fixo.</p>
                 <div class="grid two">
                     <label>Mesa origem
                         <select name="source_table_id">
@@ -307,6 +312,7 @@ foreach ($restaurants as $restaurant) {
                 </div>
                 <button class="button ghost" type="submit">Criar mesa separada</button>
             </form>
+            </details>
         <?php endif; ?>
 
         <div class="reservation-list occupancy-reservations">
