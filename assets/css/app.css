@@ -677,6 +677,34 @@ td small {
         background: var(--primary-soft);
     }
 
+    .public-shell .topbar {
+        align-items: center;
+        gap: 10px;
+    }
+
+    .public-shell .topbar nav {
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        bottom: auto;
+        box-shadow: none;
+        display: flex;
+        gap: 6px;
+        left: auto;
+        padding: 0;
+        position: static;
+        right: auto;
+    }
+
+    .public-shell .topbar nav a {
+        background: var(--primary-soft);
+        color: var(--primary-dark);
+        font-size: 12px;
+        min-height: 36px;
+        padding: 8px 10px;
+        width: auto;
+    }
+
     .page {
         max-width: 520px;
         padding: 18px 14px 104px;

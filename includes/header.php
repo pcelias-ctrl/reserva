@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
-$title = isset($title) ? $title : 'Reserva On-line';
+$title = isset($title) ? $title : 'i_Reserva';
 $isAdmin = isset($isAdmin) ? $isAdmin : false;
 ?>
 <!doctype html>
@@ -13,7 +13,7 @@ $isAdmin = isset($isAdmin) ? $isAdmin : false;
 </head>
 <body class="<?php echo $isAdmin ? 'admin-shell' : 'public-shell'; ?>">
 <header class="topbar">
-    <a class="brand" href="<?php echo $isAdmin ? 'index.php' : 'index.php'; ?>">Reserva On-line</a>
+    <a class="brand" href="<?php echo $isAdmin ? 'index.php' : 'index.php'; ?>">i_Reserva</a>
     <nav>
         <?php if ($isAdmin): ?>
             <a href="index.php">Cockpit</a>

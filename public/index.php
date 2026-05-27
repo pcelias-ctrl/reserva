@@ -12,7 +12,7 @@ $customer = current_customer();
 
 <section class="hero">
     <div>
-        <p class="eyebrow">Reserva inteligente</p>
+        <p class="eyebrow">i_Reserva</p>
         <h1>Reserve sua mesa com confirmacao direta pelo restaurante.</h1>
         <p>Escolha o restaurante, informe data, horario e preferencias. Ao finalizar, os dados ficam prontos para envio por WhatsApp.</p>
     </div>

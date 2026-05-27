@@ -125,7 +125,7 @@ INSERT INTO admins (name, email, password_hash) VALUES
 ('Administrador', 'admin@admin.com', '$2y$10$sLnDifVi7C85VdlAZSAcBeRs3pLEciKHDMzrt2lsN4uQHJt.UZ2Fy');
 
 INSERT INTO restaurants (name, legal_name, email, phone, whatsapp, logo_url, address, reservation_message) VALUES
-('Restaurante Demo', 'Restaurante Demo Ltda', 'reservas@restaurantedemo.com', '(11) 99999-9999', '5511999999999', '', 'Rua das Reservas, 100', 'Nova reserva recebida pelo Reserva On-line.');
+('Restaurante Demo', 'Restaurante Demo Ltda', 'reservas@restaurantedemo.com', '(11) 99999-9999', '5511999999999', '', 'Rua das Reservas, 100', 'Nova reserva recebida pelo i_Reserva.');
 
 INSERT INTO occasions (name, asks_birthday) VALUES
 ('Aniversario', 1),

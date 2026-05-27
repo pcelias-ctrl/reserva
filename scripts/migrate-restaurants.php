@@ -67,7 +67,7 @@ if ((int)$stmt->fetch()['total'] === 0) {
         '5511999999999',
         '',
         'Rua das Reservas, 100',
-        'Nova reserva recebida pelo Reserva On-line.'
+        'Nova reserva recebida pelo i_Reserva.'
     ));
 }
 

@@ -94,7 +94,7 @@ function restaurant_logo_src($restaurant)
 function reservation_whatsapp_message($reservation)
 {
     $lines = array(
-        'Nova reserva pelo Reserva On-line',
+        'Nova reserva pelo i_Reserva',
         'Restaurante: ' . $reservation['restaurant_name'],
         'Cliente: ' . $reservation['customer_name'],
         'Telefone: ' . $reservation['customer_phone'],
