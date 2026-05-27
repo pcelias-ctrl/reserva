@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         redirect_to('minhas-reservas.php');
     }
-    flash('error', 'Email ou senha invalidos.');
+    flash('error', 'E-mail ou senha inválidos.');
     redirect_to('login.php');
 }
 
@@ -28,7 +28,7 @@ require_once __DIR__ . '/../includes/header.php';
     <h1>Entrar</h1>
     <form method="post">
         <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
-        <label>Email <input type="email" name="email" required></label>
+        <label>E-mail <input type="email" name="email" required></label>
         <label>Senha <input type="password" name="password" required></label>
         <button class="button primary" type="submit">Acessar</button>
     </form>

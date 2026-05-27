@@ -1,8 +1,8 @@
 # Reserva On-line
 
-Sistema de reservas para restaurantes, com reserva publica ou em area logada,
-interacao por email, consentimento LGPD e painel administrativo para agenda,
-aprovacao de reservas, perguntas dinamicas, ocasioes, ambientes e layout de mesas.
+Sistema de reservas para restaurantes, com reserva pública ou em área logada,
+interação por e-mail, consentimento LGPD e painel administrativo para agenda,
+aprovação de reservas, perguntas dinâmicas, ocasiões, ambientes e layout de mesas.
 
 ## Requisitos
 
@@ -10,10 +10,10 @@ aprovacao de reservas, perguntas dinamicas, ocasioes, ambientes e layout de mesa
 - MySQL 5.7+ ou MariaDB equivalente
 - Servidor web apontando para a pasta `public`
 
-## Instalacao local
+## Instalação local
 
 1. Crie o banco executando `sql/database.sql`.
-2. Configure as variaveis de ambiente, se necessario:
+2. Configure as variáveis de ambiente, se necessário:
 
 ```bash
 DB_HOST=localhost
@@ -46,19 +46,19 @@ docker run --rm -p 8080:80 --env DB_HOST=host.docker.internal reserva-online
 
 Login inicial do administrador:
 
-- Email: `admin@reserva.local`
+- E-mail: `admin@reserva.local`
 - Senha: `admin123`
 
 ## Deploy no Fly.io
 
-Este projeto ja inclui configuracao para rodar no Fly com PHP 8.2/Apache e MySQL
+Este projeto já inclui configuração para rodar no Fly com PHP 8.2/Apache e MySQL
 em um app separado.
 
 Apps sugeridos:
 
-- Aplicacao: `reserva-online-pcelias`
+- Aplicação: `reserva-online-pcelias`
 - Banco MySQL: `reserva-online-mysql-pcelias`
-- Regiao: `gru` Sao Paulo
+- Região: `gru` São Paulo
 
 Comandos principais:
 
@@ -79,28 +79,28 @@ Depois do deploy:
 - Cliente: `https://reserva-online-pcelias.fly.dev`
 - Admin: `https://reserva-online-pcelias.fly.dev/admin/login.php`
 
-## Escopo da primeira versao
+## Escopo da primeira versão
 
-- Reserva publica sem login.
+- Reserva pública sem login.
 - Reserva com cliente logado.
 - Multi-restaurante com dados cadastrais, logo por URL e WhatsApp.
 - Upload de foto/logo do restaurante salvo no banco de dados.
 - Cadastro/login simples de cliente.
-- Ocasioes especiais cadastraveis no admin.
-- Perguntas dinamicas cadastraveis no admin.
-- Campos de aniversario, restricao alimentar, observacoes e LGPD.
-- Envio de email via `mail()` quando disponivel.
-- Cockpit administrativo com indicadores, agenda e acoes de aprovacao/confirmacao.
+- Ocasiões especiais cadastráveis no admin.
+- Perguntas dinâmicas cadastráveis no admin.
+- Campos de aniversário, restrição alimentar, observações e LGPD.
+- Envio de e-mail via `mail()` quando disponível.
+- Cockpit administrativo com indicadores, agenda e ações de aprovação/confirmação.
 - Cadastro de ambientes.
-- Cadastro visual de mesas por ambiente com posicao `x/y` salva em banco.
-- Edicao de ambientes, dimensoes do layout e dados das mesas cadastradas.
+- Cadastro visual de mesas por ambiente com posição `x/y` salva em banco.
+- Edição de ambientes, dimensões do layout e dados das mesas cadastradas.
 - Link de WhatsApp com mensagem pronta para o restaurante selecionado ao final da reserva.
 
-## Proximos incrementos sugeridos
+## Próximos incrementos sugeridos
 
-- Bloqueio automatico por capacidade e disponibilidade real.
+- Bloqueio automático por capacidade e disponibilidade real.
 - SMTP autenticado.
-- Integracao com WhatsApp Business API para envio automatico sem acao manual do cliente.
-- Politicas detalhadas de cancelamento/no-show.
-- Editor visual mais avancado para plantas de salao.
+- Integração com WhatsApp Business API para envio automático sem ação manual do cliente.
+- Políticas detalhadas de cancelamento/no-show.
+- Editor visual mais avançado para plantas de salão.
 - Multi-restaurante/multiunidade.

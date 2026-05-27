@@ -13,8 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $hasUpload = !empty($_FILES['logo_file']['tmp_name']) && is_uploaded_file($_FILES['logo_file']['tmp_name']);
 
     if ($hasUpload) {
-        if ($_FILES['logo_file']['size'] > 1600000) {
-            flash('error', 'A imagem deve ter no maximo 1.6MB.');
+        if ($_FILES['logo_file']['size'] > 4000000) {
+            flash('error', 'A imagem deve ter no máximo 4MB.');
             redirect_to('restaurantes.php' . ($id ? '?id=' . $id : ''));
         }
 
@@ -68,7 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
         }
         $stmt->execute($payload);
-        flash('success', 'Restaurante atualizado.');
+        flash('success', $hasUpload ? 'Restaurante atualizado. Logo novo salvo no banco de dados.' : 'Restaurante atualizado.');
+        redirect_to('restaurantes.php?id=' . $id);
     } else {
         $payload[] = $logoMime;
         $payload[] = $logoData;
@@ -78,17 +79,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         $stmt->execute($payload);
         flash('success', 'Restaurante cadastrado.');
+        redirect_to('restaurantes.php?id=' . (int)$pdo->lastInsertId());
     }
-
-    redirect_to('restaurantes.php');
 }
 
 require_once __DIR__ . '/../includes/header.php';
 
-$restaurants = $pdo->query('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, address, reservation_message, status, created_at FROM restaurants ORDER BY status, name')->fetchAll();
+$restaurants = $pdo->query('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, IF(logo_data IS NULL, NULL, MD5(logo_data)) AS logo_version, address, reservation_message, status, created_at FROM restaurants ORDER BY status, name')->fetchAll();
 $edit = null;
 if (!empty($_GET['id'])) {
-    $stmt = $pdo->prepare('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, address, reservation_message, status, created_at FROM restaurants WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, name, legal_name, document_number, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, IF(logo_data IS NULL, NULL, MD5(logo_data)) AS logo_version, address, reservation_message, status, created_at FROM restaurants WHERE id = ?');
     $stmt->execute(array((int)$_GET['id']));
     $edit = $stmt->fetch();
 }
@@ -109,7 +109,7 @@ if (!empty($_GET['id'])) {
             <label>Nome comercial
                 <input type="text" name="name" required value="<?php echo e($edit ? $edit['name'] : ''); ?>">
             </label>
-            <label>Razao social
+            <label>Razão social
                 <input type="text" name="legal_name" value="<?php echo e($edit ? $edit['legal_name'] : ''); ?>">
             </label>
             <div class="grid two">
@@ -124,7 +124,7 @@ if (!empty($_GET['id'])) {
                 </label>
             </div>
             <div class="grid two">
-                <label>Email
+                <label>E-mail
                     <input type="email" name="email" value="<?php echo e($edit ? $edit['email'] : ''); ?>">
                 </label>
                 <label>Telefone
@@ -150,10 +150,10 @@ if (!empty($_GET['id'])) {
                 </div>
                 <label class="check"><input type="checkbox" name="remove_logo" value="1"> Remover logo salvo no banco</label>
             <?php endif; ?>
-            <label>Endereco
+            <label>Endereço
                 <textarea name="address" rows="3"><?php echo e($edit ? $edit['address'] : ''); ?></textarea>
             </label>
-            <label>Mensagem padrao da reserva
+            <label>Mensagem padrão da reserva
                 <textarea name="reservation_message" rows="3"><?php echo e($edit ? $edit['reservation_message'] : 'Nova reserva recebida pelo Reserva On-line.'); ?></textarea>
             </label>
             <button class="button primary" type="submit"><?php echo $edit ? 'Salvar restaurante' : 'Cadastrar restaurante'; ?></button>

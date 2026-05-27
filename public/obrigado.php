@@ -16,7 +16,7 @@ if (!$whatsappUrl && !empty($_GET['id'])) {
 <section class="panel centered">
     <p class="eyebrow">Tudo certo</p>
     <h1>Recebemos sua reserva.</h1>
-    <p>Ela entrou como pendente. Envie tambem os dados pelo WhatsApp do restaurante para agilizar o atendimento.</p>
+    <p>Ela entrou como pendente. Envie também os dados pelo WhatsApp do restaurante para agilizar o atendimento.</p>
     <?php if ($whatsappUrl): ?>
         <a class="button whatsapp" href="<?php echo e($whatsappUrl); ?>" target="_blank" rel="noopener">Enviar dados no WhatsApp</a>
     <?php endif; ?>

@@ -5,7 +5,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 $occasions = $pdo->query("SELECT * FROM occasions WHERE status = 'active' ORDER BY name")->fetchAll();
 $questions = $pdo->query("SELECT * FROM questionnaire_questions WHERE status = 'active' ORDER BY sort_order, id")->fetchAll();
-$restaurants = $pdo->query("SELECT id, name, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, address FROM restaurants WHERE status = 'active' ORDER BY name")->fetchAll();
+$restaurants = $pdo->query("SELECT id, name, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, IF(logo_data IS NULL, NULL, MD5(logo_data)) AS logo_version, address FROM restaurants WHERE status = 'active' ORDER BY name")->fetchAll();
 $environments = $pdo->query("SELECT e.*, r.name restaurant_name FROM environments e INNER JOIN restaurants r ON r.id = e.restaurant_id WHERE e.status = 'active' AND r.status = 'active' ORDER BY r.name, e.name")->fetchAll();
 $customer = current_customer();
 ?>
@@ -13,14 +13,14 @@ $customer = current_customer();
 <section class="hero">
     <div>
         <p class="eyebrow">i-Reserva</p>
-        <h1>Reserve sua mesa com confirmacao direta pelo restaurante.</h1>
-        <p>Escolha o restaurante, informe data, horario e preferencias. Ao finalizar, os dados ficam prontos para envio por WhatsApp.</p>
+        <h1>Reserve sua mesa com confirmação direta pelo restaurante.</h1>
+        <p>Escolha o restaurante, informe data, horário e preferências. Ao finalizar, os dados ficam prontos para envio por WhatsApp.</p>
     </div>
     <div class="hero-panel">
         <strong>Sua mesa, sem espera</strong>
         <span>Reserva enviada direto ao restaurante</span>
         <span>Atendimento preparado antes da chegada</span>
-        <span>Confirmacao rapida pelo WhatsApp</span>
+        <span>Confirmação rápida pelo WhatsApp</span>
     </div>
 </section>
 
@@ -52,15 +52,15 @@ $customer = current_customer();
             <label>Data
                 <input type="date" name="reservation_date" required min="<?php echo date('Y-m-d'); ?>">
             </label>
-            <label>Horario
+            <label>Horário
                 <input type="time" name="reservation_time" required>
             </label>
-            <label>Numero de pessoas
+            <label>Número de pessoas
                 <input type="number" name="party_size" min="1" max="40" required>
             </label>
             <label>Ambiente preferido
                 <select name="environment_id">
-                    <option value="">Sem preferencia</option>
+                    <option value="">Sem preferência</option>
                     <?php foreach ($environments as $environment): ?>
                         <option value="<?php echo (int)$environment['id']; ?>" data-restaurant="<?php echo (int)$environment['restaurant_id']; ?>">
                             <?php echo e($environment['restaurant_name'] . ' - ' . $environment['name']); ?>
@@ -77,7 +77,7 @@ $customer = current_customer();
             <label>Nome
                 <input type="text" name="customer_name" required value="<?php echo e($customer ? $customer['name'] : ''); ?>">
             </label>
-            <label>Email
+            <label>E-mail
                 <input type="email" name="customer_email" required value="<?php echo e($customer ? $customer['email'] : ''); ?>">
             </label>
             <label>Telefone/WhatsApp
@@ -92,9 +92,9 @@ $customer = current_customer();
     </section>
 
     <section class="panel">
-        <h2>Preferencias</h2>
+            <h2>Preferências</h2>
         <div class="grid two">
-            <label>Ocasiao especial
+            <label>Ocasião especial
                 <select name="occasion_id" id="occasionSelect">
                     <option value="">Nenhuma</option>
                     <?php foreach ($occasions as $occasion): ?>
@@ -105,16 +105,16 @@ $customer = current_customer();
                 </select>
             </label>
             <div class="birthday-fields" id="birthdayFields">
-                <label>Dia do aniversario
+                <label>Dia do aniversário
                     <input type="number" name="birthday_day" min="1" max="31">
                 </label>
-                <label>Mes
+                <label>Mês
                     <input type="number" name="birthday_month" min="1" max="12">
                 </label>
             </div>
         </div>
-        <label>Restricao alimentar
-            <textarea name="dietary_restrictions" rows="3" placeholder="Alergias, lactose, frutos do mar, gluten..."></textarea>
+        <label>Restrição alimentar
+            <textarea name="dietary_restrictions" rows="3" placeholder="Alergias, lactose, frutos do mar, glúten..."></textarea>
         </label>
         <label>Algo mais que devemos saber?
             <textarea name="notes" rows="3"></textarea>
@@ -123,7 +123,7 @@ $customer = current_customer();
 
     <?php if ($questions): ?>
         <section class="panel">
-            <h2>Questionario</h2>
+            <h2>Questionário</h2>
             <?php foreach ($questions as $question): ?>
                 <label><?php echo e($question['label']); ?>
                     <?php if ($question['field_type'] === 'textarea'): ?>

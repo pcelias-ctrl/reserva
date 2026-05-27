@@ -13,7 +13,7 @@ $reservations = $stmt->fetchAll();
     <h1>Minhas reservas</h1>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Restaurante</th><th>Data</th><th>Hora</th><th>Pessoas</th><th>Ocasiao</th><th>Status</th></tr></thead>
+            <thead><tr><th>Restaurante</th><th>Data</th><th>Hora</th><th>Pessoas</th><th>Ocasião</th><th>Status</th></tr></thead>
             <tbody>
             <?php foreach ($reservations as $reservation): ?>
                 <tr>

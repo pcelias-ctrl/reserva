@@ -29,7 +29,7 @@ $environmentId = !empty($_POST['environment_id']) ? (int)$_POST['environment_id'
 $stmt = $pdo->prepare("SELECT id FROM restaurants WHERE id = ? AND status = 'active'");
 $stmt->execute(array($restaurantId));
 if (!$stmt->fetch()) {
-    flash('error', 'Selecione um restaurante valido.');
+    flash('error', 'Selecione um restaurante válido.');
     redirect_to('index.php');
 }
 
@@ -82,5 +82,5 @@ $reservation = $stmt->fetch();
 notify_reservation_created($reservation, $answerLabels);
 
 $_SESSION['last_whatsapp_url'] = build_whatsapp_url($reservation['restaurant_whatsapp'], reservation_whatsapp_message($reservation));
-flash('success', 'Reserva enviada. O restaurante vai analisar e confirmar por email.');
+flash('success', 'Reserva enviada. O restaurante vai analisar e confirmar por e-mail.');
 redirect_to('obrigado.php?id=' . $reservationId);

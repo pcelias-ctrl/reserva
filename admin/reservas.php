@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute(array($id));
         $reservation = $stmt->fetch();
         if ($reservation) {
-            send_reservation_email($reservation['customer_email'], 'Atualizacao da sua reserva', 'Sua reserva agora esta com status: ' . $status);
+            send_reservation_email($reservation['customer_email'], 'Atualização da sua reserva', 'Sua reserva agora está com status: ' . $status);
         }
         flash('success', 'Reserva atualizada.');
     }
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/../includes/header.php';
 
 $filter = isset($_GET['status']) ? $_GET['status'] : '';
-$sql = "SELECT r.*, rest.name restaurant_name, rest.whatsapp restaurant_whatsapp, COALESCE(o.name, 'Nenhuma') occasion_name, COALESCE(e.name, 'Sem preferencia') environment_name, COALESCE(t.label, '-') table_label
+$sql = "SELECT r.*, rest.name restaurant_name, rest.whatsapp restaurant_whatsapp, COALESCE(o.name, 'Nenhuma') occasion_name, COALESCE(e.name, 'Sem preferência') environment_name, COALESCE(t.label, '-') table_label
         FROM reservations r
         INNER JOIN restaurants rest ON rest.id = r.restaurant_id
         LEFT JOIN occasions o ON o.id = r.occasion_id
@@ -58,11 +58,11 @@ $reservations = $stmt->fetchAll();
             <article class="reservation-card">
                 <div>
                     <h2><?php echo e($reservation['customer_name']); ?></h2>
-                    <p><?php echo e(date('d/m/Y', strtotime($reservation['reservation_date']))); ?> as <?php echo e(substr($reservation['reservation_time'], 0, 5)); ?> · <?php echo (int)$reservation['party_size']; ?> pessoas</p>
+                    <p><?php echo e(date('d/m/Y', strtotime($reservation['reservation_date']))); ?> às <?php echo e(substr($reservation['reservation_time'], 0, 5)); ?> · <?php echo (int)$reservation['party_size']; ?> pessoas</p>
                     <p><?php echo e($reservation['customer_email']); ?> · <?php echo e($reservation['customer_phone']); ?></p>
                     <p><?php echo e($reservation['restaurant_name']); ?> · <?php echo e($reservation['environment_name']); ?> · mesa <?php echo e($reservation['table_label']); ?> · <?php echo e($reservation['occasion_name']); ?></p>
-                    <?php if ($reservation['dietary_restrictions']): ?><p><strong>Restricoes:</strong> <?php echo e($reservation['dietary_restrictions']); ?></p><?php endif; ?>
-                    <?php if ($reservation['notes']): ?><p><strong>Observacoes:</strong> <?php echo e($reservation['notes']); ?></p><?php endif; ?>
+                    <?php if ($reservation['dietary_restrictions']): ?><p><strong>Restrições:</strong> <?php echo e($reservation['dietary_restrictions']); ?></p><?php endif; ?>
+                    <?php if ($reservation['notes']): ?><p><strong>Observações:</strong> <?php echo e($reservation['notes']); ?></p><?php endif; ?>
                 </div>
                 <form method="post" class="status-form">
                     <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">

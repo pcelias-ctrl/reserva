@@ -128,18 +128,18 @@ INSERT INTO restaurants (name, legal_name, email, phone, whatsapp, logo_url, add
 ('Restaurante Demo', 'Restaurante Demo Ltda', 'reservas@restaurantedemo.com', '(11) 99999-9999', '5511999999999', '', 'Rua das Reservas, 100', 'Nova reserva recebida pelo i-Reserva.');
 
 INSERT INTO occasions (name, asks_birthday) VALUES
-('Aniversario', 1),
-('Reuniao de negocios', 0),
-('Celebracao', 0),
+('Aniversário', 1),
+('Reunião de negócios', 0),
+('Celebração', 0),
 ('Jantar romantico', 0);
 
 INSERT INTO questionnaire_questions (label, field_type, options_text, is_required, sort_order) VALUES
-('Alguma restricao alimentar especifica?', 'textarea', NULL, 0, 10),
-('Prefere ambiente interno ou externo?', 'select', 'Interno\nExterno\nSem preferencia', 0, 20);
+('Alguma restrição alimentar específica?', 'textarea', NULL, 0, 10),
+('Prefere ambiente interno ou externo?', 'select', 'Interno\nExterno\nSem preferência', 0, 20);
 
 INSERT INTO environments (restaurant_id, name, description, width, height) VALUES
 (1, 'Salao principal', 'Ambiente interno principal', 960, 520),
-(1, 'Varanda', 'Area externa coberta', 760, 420);
+(1, 'Varanda', 'Área externa coberta', 760, 420);
 
 INSERT INTO tables_map (environment_id, label, shape, seats, position_x, position_y) VALUES
 (1, 'M01', 'square', 2, 80, 80),

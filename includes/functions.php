@@ -34,7 +34,7 @@ function verify_csrf()
         $posted = isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '';
         if (!$posted || !hash_equals(csrf_token(), $posted)) {
             http_response_code(419);
-            die('Sessao expirada. Recarregue a pagina e tente novamente.');
+            die('Sessão expirada. Recarregue a página e tente novamente.');
         }
     }
 }
@@ -84,7 +84,8 @@ function restaurant_logo_src($restaurant)
 {
     $hasLogo = !empty($restaurant['has_logo']) || (!array_key_exists('has_logo', $restaurant) && !empty($restaurant['logo_mime']));
     if ($hasLogo) {
-        return '/logo.php?id=' . (int)$restaurant['id'];
+        $version = !empty($restaurant['logo_version']) ? '&v=' . rawurlencode($restaurant['logo_version']) : '';
+        return '/logo.php?id=' . (int)$restaurant['id'] . $version;
     }
     if (!empty($restaurant['logo_url'])) {
         return $restaurant['logo_url'];
@@ -99,18 +100,18 @@ function reservation_whatsapp_message($reservation)
         'Restaurante: ' . $reservation['restaurant_name'],
         'Cliente: ' . $reservation['customer_name'],
         'Telefone: ' . $reservation['customer_phone'],
-        'Email: ' . $reservation['customer_email'],
+        'E-mail: ' . $reservation['customer_email'],
         'Data: ' . date('d/m/Y', strtotime($reservation['reservation_date'])),
-        'Horario: ' . substr($reservation['reservation_time'], 0, 5),
+        'Horário: ' . substr($reservation['reservation_time'], 0, 5),
         'Pessoas: ' . $reservation['party_size'],
-        'Ocasiao: ' . $reservation['occasion_name']
+        'Ocasião: ' . $reservation['occasion_name']
     );
 
     if (!empty($reservation['dietary_restrictions'])) {
-        $lines[] = 'Restricoes: ' . $reservation['dietary_restrictions'];
+        $lines[] = 'Restrições: ' . $reservation['dietary_restrictions'];
     }
     if (!empty($reservation['notes'])) {
-        $lines[] = 'Observacoes: ' . $reservation['notes'];
+        $lines[] = 'Observações: ' . $reservation['notes'];
     }
 
     return implode("\n", $lines);

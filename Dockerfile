@@ -1,6 +1,10 @@
 FROM php:8.2-apache
 
-RUN docker-php-ext-install pdo pdo_mysql
+RUN docker-php-ext-install pdo pdo_mysql \
+    && { \
+      echo 'upload_max_filesize=4M'; \
+      echo 'post_max_size=6M'; \
+    } > /usr/local/etc/php/conf.d/reserva-upload.ini
 
 COPY . /var/www/html/
 

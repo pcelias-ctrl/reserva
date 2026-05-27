@@ -89,4 +89,4 @@ if (!column_exists($pdo, 'reservations', 'restaurant_id')) {
     $pdo->exec('ALTER TABLE reservations ADD CONSTRAINT fk_reservation_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE');
 }
 
-echo "Migracao multi-restaurante concluida.\n";
+echo "Migração multi-restaurante concluída.\n";
