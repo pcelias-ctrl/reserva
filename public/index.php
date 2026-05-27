@@ -54,7 +54,7 @@ function restaurant_hours_summary($availability, $restaurantId)
     </div>
 </section>
 
-<form class="form-grid" action="reservar.php" method="post">
+<form class="form-grid public-booking-form no-restaurant-selected" action="reservar.php" method="post">
     <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
 
     <section class="panel restaurant-showcase">
@@ -67,7 +67,7 @@ function restaurant_hours_summary($availability, $restaurantId)
         <div class="restaurant-choice restaurant-showcase-grid">
             <?php foreach ($restaurants as $index => $restaurant): ?>
                 <label class="restaurant-option restaurant-showcase-card">
-                    <input type="radio" name="restaurant_id" value="<?php echo (int)$restaurant['id']; ?>" <?php echo $index === 0 ? 'checked' : ''; ?> required>
+                    <input type="radio" name="restaurant_id" value="<?php echo (int)$restaurant['id']; ?>" required>
                     <span class="restaurant-logo featured">
                         <?php if ($logo = restaurant_logo_src($restaurant)): ?>
                             <strong><?php echo e(substr($restaurant['name'], 0, 1)); ?></strong>
@@ -100,19 +100,19 @@ function restaurant_hours_summary($availability, $restaurantId)
                 <p class="eyebrow">Dados da reserva</p>
                 <h2>Escolha data, horário e preferências</h2>
             </div>
-            <span class="selected-restaurant-pill" id="selectedRestaurantPill"></span>
+            <span class="selected-restaurant-pill" id="selectedRestaurantPill">Escolha um restaurante acima</span>
         </div>
         <div class="selected-restaurant-summary" id="selectedRestaurantSummary"></div>
         <div class="grid two">
-            <label>Data
+            <label>Data <span class="required-mark">obrigatório</span>
                 <input type="date" name="reservation_date" required min="<?php echo date('Y-m-d'); ?>">
             </label>
-            <label>Horário
+            <label>Horário <span class="required-mark">obrigatório</span>
                 <select name="reservation_time" id="reservationTime" required>
                     <option value="">Escolha restaurante e data</option>
                 </select>
             </label>
-            <label>Número de pessoas
+            <label>Número de pessoas <span class="required-mark">obrigatório</span>
                 <input type="number" name="party_size" min="1" max="40" required>
             </label>
             <label>Ambiente preferido
@@ -131,18 +131,18 @@ function restaurant_hours_summary($availability, $restaurantId)
     <section class="panel">
         <h2>Seus dados</h2>
         <div class="grid two">
-            <label>Nome
+            <label>Nome <span class="required-mark">obrigatório</span>
                 <input type="text" name="customer_name" required value="<?php echo e($customer ? $customer['name'] : ''); ?>">
             </label>
-            <label>E-mail
-                <input type="email" name="customer_email" required value="<?php echo e($customer ? $customer['email'] : ''); ?>">
+            <label>E-mail <span class="optional-mark">opcional</span>
+                <input type="email" name="customer_email" value="<?php echo e($customer ? $customer['email'] : ''); ?>">
             </label>
-            <label>Telefone/WhatsApp
+            <label>Telefone/WhatsApp <span class="required-mark">obrigatório</span>
                 <input type="text" name="customer_phone" required value="<?php echo e($customer ? $customer['phone'] : ''); ?>">
             </label>
             <?php if (!$customer): ?>
                 <label>Criar senha para acompanhar depois
-                    <input type="password" name="customer_password" placeholder="Opcional">
+                    <input type="password" name="customer_password" placeholder="Opcional, precisa informar e-mail">
                 </label>
             <?php endif; ?>
         </div>
@@ -208,7 +208,7 @@ function restaurant_hours_summary($availability, $restaurantId)
         <h2>Consentimentos</h2>
         <label class="check">
             <input type="checkbox" name="lgpd_terms_consent" value="1" required>
-            Autorizo o uso dos meus dados para processamento desta reserva, conforme a LGPD.
+            Autorizo o uso dos meus dados para processamento desta reserva, conforme a LGPD. <span class="required-mark">obrigatório</span>
         </label>
         <label class="check">
             <input type="checkbox" name="lgpd_share_consent" value="1">

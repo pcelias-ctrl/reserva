@@ -7,11 +7,16 @@ verify_csrf();
 
 $customer = current_customer();
 $customerId = $customer ? (int)$customer['id'] : null;
-$email = trim($_POST['customer_email']);
+$email = trim(isset($_POST['customer_email']) ? $_POST['customer_email'] : '');
 $name = trim($_POST['customer_name']);
 $phone = trim($_POST['customer_phone']);
 
-if (!$customerId && !empty($_POST['customer_password'])) {
+if (!empty($_POST['customer_password']) && $email === '') {
+    flash('error', 'Informe um e-mail para criar senha e acompanhar suas reservas depois.');
+    redirect_to('index.php');
+}
+
+if (!$customerId && $email !== '' && !empty($_POST['customer_password'])) {
     $stmt = $pdo->prepare('SELECT id FROM customers WHERE email = ?');
     $stmt->execute(array($email));
     if (!$stmt->fetch()) {
@@ -22,7 +27,7 @@ if (!$customerId && !empty($_POST['customer_password'])) {
     }
 }
 
-if (!$customerId) {
+if (!$customerId && $email !== '') {
     $stmt = $pdo->prepare('SELECT id FROM customers WHERE LOWER(email) = ?');
     $stmt->execute(array(strtolower($email)));
     $existingCustomer = $stmt->fetch();
@@ -71,7 +76,7 @@ $stmt->execute(array(
     $occasionId,
     $environmentId,
     $name,
-    $email,
+    $email !== '' ? $email : null,
     $phone,
     $_POST['reservation_date'],
     $_POST['reservation_time'],

@@ -52,6 +52,7 @@ document.addEventListener('pointerup', function (event) {
     body.append('csrf_token', map.getAttribute('data-csrf'));
     body.append('action', 'move_daily_table');
     body.append('table_id', table.getAttribute('data-id'));
+    body.append('table_kind', table.getAttribute('data-kind') || 'base');
     body.append('environment_id', map.getAttribute('data-environment-id'));
     body.append('layout_date', map.getAttribute('data-layout-date'));
     body.append('x', parseInt(table.style.left, 10));

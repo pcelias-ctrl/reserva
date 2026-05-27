@@ -245,7 +245,9 @@ function notify_reservation_created($reservation, $answers)
         '',
         'Obrigado por escolher o i-Reserva.'
     );
-    send_reservation_email($reservation['customer_email'], 'Recebemos sua reserva', implode("\n", $clientLines), $reservation);
+    if (!empty($reservation['customer_email'])) {
+        send_reservation_email($reservation['customer_email'], 'Recebemos sua reserva', implode("\n", $clientLines), $reservation);
+    }
 
     $adminLines = array(
         'Nova reserva recebida pelo i-Reserva',

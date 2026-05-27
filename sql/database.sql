@@ -112,7 +112,7 @@ CREATE TABLE reservations (
   environment_id INT NULL,
   table_id INT NULL,
   customer_name VARCHAR(160) NOT NULL,
-  customer_email VARCHAR(160) NOT NULL,
+  customer_email VARCHAR(160) NULL,
   customer_phone VARCHAR(40) NOT NULL,
   reservation_date DATE NOT NULL,
   reservation_time TIME NOT NULL,
@@ -160,18 +160,37 @@ CREATE TABLE occupancy_layouts (
   CONSTRAINT fk_occupancy_layout_table FOREIGN KEY (table_id) REFERENCES tables_map(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE occupancy_extra_tables (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  layout_date DATE NOT NULL,
+  environment_id INT NOT NULL,
+  label VARCHAR(40) NOT NULL,
+  shape ENUM('square','round') NOT NULL DEFAULT 'square',
+  seats INT NOT NULL DEFAULT 2,
+  position_x INT NOT NULL DEFAULT 60,
+  position_y INT NOT NULL DEFAULT 60,
+  source_table_id INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_extra_table_environment FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE CASCADE,
+  CONSTRAINT fk_extra_table_source FOREIGN KEY (source_table_id) REFERENCES tables_map(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE occupancy_assignments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   layout_date DATE NOT NULL,
   environment_id INT NOT NULL,
   reservation_id INT NOT NULL,
-  table_id INT NOT NULL,
+  table_id INT NULL,
+  extra_table_id INT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uniq_occupancy_assignment (layout_date, table_id),
+  UNIQUE KEY uniq_occupancy_extra_assignment (layout_date, extra_table_id),
   KEY idx_occupancy_reservation (reservation_id, layout_date),
   CONSTRAINT fk_occupancy_assignment_environment FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE CASCADE,
   CONSTRAINT fk_occupancy_assignment_reservation FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE,
-  CONSTRAINT fk_occupancy_assignment_table FOREIGN KEY (table_id) REFERENCES tables_map(id) ON DELETE CASCADE
+  CONSTRAINT fk_occupancy_assignment_table FOREIGN KEY (table_id) REFERENCES tables_map(id) ON DELETE CASCADE,
+  CONSTRAINT fk_occupancy_assignment_extra_table FOREIGN KEY (extra_table_id) REFERENCES occupancy_extra_tables(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO admins (name, email, password_hash) VALUES

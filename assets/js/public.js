@@ -21,6 +21,7 @@ var reservationTime = document.getElementById('reservationTime');
 var reservationDetails = document.getElementById('reservationDetails');
 var selectedRestaurantPill = document.getElementById('selectedRestaurantPill');
 var selectedRestaurantSummary = document.getElementById('selectedRestaurantSummary');
+var bookingForm = document.querySelector('.public-booking-form');
 
 function syncRestaurantShowcase(scrollToDetails) {
     var selectedRestaurant = document.querySelector('input[name="restaurant_id"]:checked');
@@ -37,6 +38,9 @@ function syncRestaurantShowcase(scrollToDetails) {
         var card = selectedRestaurant.closest('.restaurant-showcase-card');
         var name = card ? card.querySelector('.restaurant-showcase-content strong') : null;
         selectedRestaurantPill.textContent = name ? 'Selecionado: ' + name.textContent : '';
+        if (bookingForm) {
+            bookingForm.classList.remove('no-restaurant-selected');
+        }
         if (selectedRestaurantSummary && card) {
             var logo = card.querySelector('.restaurant-logo.featured');
             var address = card.querySelector('.restaurant-showcase-content em');
@@ -47,6 +51,16 @@ function syncRestaurantShowcase(scrollToDetails) {
                 + (address ? '<p>' + address.textContent + '</p>' : '')
                 + (meta ? '<small>' + meta.textContent.replace(/\s+/g, ' ').trim() + '</small>' : '')
                 + '</div>';
+        }
+    } else {
+        if (bookingForm) {
+            bookingForm.classList.add('no-restaurant-selected');
+        }
+        if (selectedRestaurantPill) {
+            selectedRestaurantPill.textContent = 'Escolha um restaurante acima';
+        }
+        if (selectedRestaurantSummary) {
+            selectedRestaurantSummary.innerHTML = '<strong>Primeiro escolha o restaurante para liberar a reserva.</strong>';
         }
     }
     if (scrollToDetails && reservationDetails) {
