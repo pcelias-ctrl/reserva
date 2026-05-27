@@ -513,6 +513,12 @@ td small {
     margin-bottom: 0;
 }
 
+.email-test-form {
+    border-top: 1px solid rgba(8, 83, 77, 0.12);
+    margin-top: 14px;
+    padding-top: 14px;
+}
+
 .metric span {
     color: var(--muted);
     display: block;

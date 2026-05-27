@@ -3,11 +3,32 @@ $title = 'Restaurantes';
 $isAdmin = true;
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/mailer.php';
 require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+
+    if (isset($_POST['action']) && $_POST['action'] === 'test_email' && $id) {
+        $stmt = $pdo->prepare('SELECT * FROM restaurants WHERE id = ?');
+        $stmt->execute(array($id));
+        $restaurant = $stmt->fetch();
+        if (!$restaurant) {
+            flash('error', 'Restaurante não encontrado para teste de e-mail.');
+            redirect_to('restaurantes.php');
+        }
+
+        $target = !empty($restaurant['smtp_admin_email']) ? $restaurant['smtp_admin_email'] : $restaurant['email'];
+        $message = "Teste de e-mail do i-Reserva\n\nSe você recebeu esta mensagem, o SMTP do restaurante está configurado corretamente.";
+        if (send_reservation_email($target, 'Teste de SMTP - i-Reserva', $message, $restaurant)) {
+            flash('success', 'E-mail de teste enviado para ' . $target . '.');
+        } else {
+            flash('error', 'Falha no teste de e-mail: ' . last_email_error());
+        }
+        redirect_to('restaurantes.php?id=' . $id);
+    }
+
     $logoMime = null;
     $logoData = null;
     $hasUpload = !empty($_FILES['logo_file']['tmp_name']) && is_uploaded_file($_FILES['logo_file']['tmp_name']);
@@ -222,6 +243,15 @@ if (!empty($_GET['id'])) {
             </div>
             <button class="button primary" type="submit"><?php echo $edit ? 'Salvar restaurante' : 'Cadastrar restaurante'; ?></button>
         </form>
+        <?php if ($edit): ?>
+            <form method="post" class="email-test-form">
+                <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                <input type="hidden" name="id" value="<?php echo (int)$edit['id']; ?>">
+                <input type="hidden" name="action" value="test_email">
+                <button class="button ghost" type="submit">Enviar e-mail de teste SMTP</button>
+                <p class="muted-line">O teste usa a configuração salva do restaurante e envia para o e-mail administrativo, ou para o e-mail do restaurante.</p>
+            </form>
+        <?php endif; ?>
     </div>
 
     <div class="restaurant-stack">
