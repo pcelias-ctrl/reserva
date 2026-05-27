@@ -18,6 +18,24 @@ var restaurantInputs = document.querySelectorAll('input[name="restaurant_id"]');
 var environmentSelect = document.querySelector('select[name="environment_id"]');
 var reservationDate = document.querySelector('input[name="reservation_date"]');
 var reservationTime = document.getElementById('reservationTime');
+var reservationDetails = document.getElementById('reservationDetails');
+var selectedRestaurantPill = document.getElementById('selectedRestaurantPill');
+
+function syncRestaurantShowcase(scrollToDetails) {
+    var selectedRestaurant = document.querySelector('input[name="restaurant_id"]:checked');
+    Array.prototype.forEach.call(document.querySelectorAll('.restaurant-showcase-card'), function (card) {
+        var input = card.querySelector('input[name="restaurant_id"]');
+        card.classList.toggle('selected', input && selectedRestaurant && input.value === selectedRestaurant.value);
+    });
+    if (selectedRestaurantPill && selectedRestaurant) {
+        var card = selectedRestaurant.closest('.restaurant-showcase-card');
+        var name = card ? card.querySelector('.restaurant-showcase-content strong') : null;
+        selectedRestaurantPill.textContent = name ? name.textContent : '';
+    }
+    if (scrollToDetails && reservationDetails) {
+        reservationDetails.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+}
 
 function syncEnvironmentOptions() {
     if (!environmentSelect || !restaurantInputs.length) {
@@ -37,8 +55,12 @@ function syncEnvironmentOptions() {
 Array.prototype.forEach.call(restaurantInputs, function (input) {
     input.addEventListener('change', syncEnvironmentOptions);
     input.addEventListener('change', syncTimeOptions);
+    input.addEventListener('change', function () {
+        syncRestaurantShowcase(true);
+    });
 });
 syncEnvironmentOptions();
+syncRestaurantShowcase(false);
 
 function timeToMinutes(time) {
     var parts = time.split(':');

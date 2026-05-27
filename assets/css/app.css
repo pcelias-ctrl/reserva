@@ -384,6 +384,18 @@ td small {
     margin-bottom: 18px;
 }
 
+.restaurant-showcase {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 239, 0.94)),
+        repeating-linear-gradient(135deg, rgba(8, 127, 115, 0.04) 0 1px, transparent 1px 18px);
+}
+
+.restaurant-showcase-grid {
+    gap: 18px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 0;
+}
+
 .restaurant-option {
     align-items: center;
     background: linear-gradient(180deg, #fff, #fffaf5);
@@ -397,6 +409,24 @@ td small {
     padding: 14px;
 }
 
+.restaurant-showcase-card {
+    align-items: stretch;
+    border-radius: 18px;
+    gap: 14px;
+    grid-template-columns: 1fr;
+    min-height: 100%;
+    overflow: hidden;
+    padding: 16px;
+    position: relative;
+}
+
+.restaurant-showcase-card input {
+    opacity: 0;
+    position: absolute;
+    right: 14px;
+    top: 14px;
+}
+
 .restaurant-option input {
     min-height: auto;
     width: auto;
@@ -408,9 +438,33 @@ td small {
     box-shadow: 0 0 0 4px rgba(8, 127, 115, 0.12), 0 16px 36px rgba(8, 83, 77, 0.1);
 }
 
+.restaurant-showcase-card.selected,
+.restaurant-showcase-card:has(input:checked) {
+    background: linear-gradient(180deg, #ffffff, #effbf6);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(8, 127, 115, 0.12), 0 20px 46px rgba(8, 83, 77, 0.14);
+    transform: translateY(-1px);
+}
+
 .restaurant-option strong,
 .restaurant-card h2 {
     color: var(--ink);
+}
+
+.restaurant-showcase-content {
+    display: grid;
+    gap: 8px;
+}
+
+.restaurant-showcase-content strong {
+    color: var(--primary-dark);
+    font-size: 21px;
+    line-height: 1.12;
+}
+
+.restaurant-showcase-content small {
+    color: var(--muted);
+    font-weight: 700;
 }
 
 .restaurant-option em {
@@ -418,6 +472,46 @@ td small {
     display: block;
     font-style: normal;
     font-weight: 500;
+}
+
+.restaurant-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.restaurant-meta span,
+.restaurant-message,
+.restaurant-select-label,
+.selected-restaurant-pill {
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    padding: 7px 10px;
+}
+
+.restaurant-meta span {
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+}
+
+.restaurant-message {
+    background: #fff3dc;
+    color: var(--accent-dark);
+    line-height: 1.25;
+}
+
+.restaurant-select-label {
+    background: var(--primary-dark);
+    color: #fff;
+    display: inline-flex;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.selected-restaurant-pill {
+    background: var(--primary-soft);
+    color: var(--primary-dark);
 }
 
 .restaurant-stack {
@@ -469,6 +563,14 @@ td small {
     width: 48px;
 }
 
+.restaurant-logo.featured {
+    border-radius: 20px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    font-size: 34px;
+    height: 132px;
+    width: 100%;
+}
+
 .restaurant-logo img {
     background: #fff;
     height: 100%;
@@ -476,6 +578,10 @@ td small {
     position: absolute;
     inset: 0;
     width: 100%;
+}
+
+.restaurant-logo.featured img {
+    padding: 10px;
 }
 
 .restaurant-logo strong {
@@ -1649,6 +1755,7 @@ html[data-config-tab="ocasioes"] #questionario > .panel:first-child {
     .reservation-card,
     .metric-grid,
     .restaurant-choice,
+    .restaurant-showcase-grid,
     .restaurant-card,
     .table-editor-grid {
         grid-template-columns: 1fr;
@@ -1721,6 +1828,26 @@ html[data-config-tab="ocasioes"] #questionario > .panel:first-child {
         border-radius: 18px;
         grid-template-columns: auto 48px 1fr;
         padding: 14px;
+    }
+
+    .restaurant-showcase-card {
+        grid-template-columns: 96px 1fr;
+        padding: 14px;
+    }
+
+    .restaurant-showcase-card input {
+        right: 10px;
+        top: 10px;
+    }
+
+    .restaurant-logo.featured {
+        border-radius: 18px;
+        height: 96px;
+        width: 96px;
+    }
+
+    .restaurant-showcase-content strong {
+        font-size: 18px;
     }
 
     .restaurant-card {
@@ -1822,6 +1949,20 @@ html[data-config-tab="ocasioes"] #questionario > .panel:first-child {
 @media (max-width: 520px) {
     .topbar nav a {
         font-size: 11px;
+    }
+
+    .restaurant-showcase-card {
+        grid-template-columns: 82px 1fr;
+    }
+
+    .restaurant-logo.featured {
+        height: 82px;
+        width: 82px;
+    }
+
+    .restaurant-meta,
+    .restaurant-message {
+        display: none;
     }
 
     .hero::after,

@@ -5,7 +5,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 $occasions = $pdo->query("SELECT * FROM occasions WHERE status = 'active' ORDER BY name")->fetchAll();
 $questions = $pdo->query("SELECT * FROM questionnaire_questions WHERE status = 'active' ORDER BY sort_order, id")->fetchAll();
-$restaurants = $pdo->query("SELECT id, name, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, IF(logo_data IS NULL, NULL, MD5(logo_data)) AS logo_version, address FROM restaurants WHERE status = 'active' ORDER BY name")->fetchAll();
+$restaurants = $pdo->query("SELECT id, name, legal_name, email, phone, whatsapp, logo_url, logo_mime, logo_data IS NOT NULL AS has_logo, IF(logo_data IS NULL, NULL, MD5(logo_data)) AS logo_version, address, reservation_message FROM restaurants WHERE status = 'active' ORDER BY name")->fetchAll();
 $environments = $pdo->query("SELECT e.*, r.name restaurant_name FROM environments e INNER JOIN restaurants r ON r.id = e.restaurant_id WHERE e.status = 'active' AND r.status = 'active' ORDER BY r.name, e.name")->fetchAll();
 $hoursRows = $pdo->query("SELECT restaurant_id, weekday, period, opens_at, closes_at, is_closed FROM restaurant_hours ORDER BY restaurant_id, weekday, period")->fetchAll();
 $availability = array();
@@ -20,6 +20,24 @@ foreach ($hoursRows as $row) {
     );
 }
 $customer = current_customer();
+
+function restaurant_hours_summary($availability, $restaurantId)
+{
+    if (empty($availability[$restaurantId])) {
+        return 'Horários sob consulta';
+    }
+    $periodLabels = array('lunch' => 'almoço', 'dinner' => 'jantar');
+    $availablePeriods = array();
+    foreach ($availability[$restaurantId] as $periods) {
+        foreach ($periods as $period) {
+            $availablePeriods[$period['period']] = isset($periodLabels[$period['period']]) ? $periodLabels[$period['period']] : $period['period'];
+        }
+    }
+    if (!$availablePeriods) {
+        return 'Horários sob consulta';
+    }
+    return 'Atende ' . implode(' e ', array_values($availablePeriods));
+}
 ?>
 
 <section class="hero">
@@ -39,13 +57,18 @@ $customer = current_customer();
 <form class="form-grid" action="reservar.php" method="post">
     <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
 
-    <section class="panel">
-        <h2>Dados da reserva</h2>
-        <div class="restaurant-choice">
+    <section class="panel restaurant-showcase">
+        <div class="section-title">
+            <div>
+                <p class="eyebrow">Escolha o restaurante</p>
+                <h2>Onde você quer reservar?</h2>
+            </div>
+        </div>
+        <div class="restaurant-choice restaurant-showcase-grid">
             <?php foreach ($restaurants as $index => $restaurant): ?>
-                <label class="restaurant-option">
+                <label class="restaurant-option restaurant-showcase-card">
                     <input type="radio" name="restaurant_id" value="<?php echo (int)$restaurant['id']; ?>" <?php echo $index === 0 ? 'checked' : ''; ?> required>
-                    <span class="restaurant-logo small">
+                    <span class="restaurant-logo featured">
                         <?php if ($logo = restaurant_logo_src($restaurant)): ?>
                             <strong><?php echo e(substr($restaurant['name'], 0, 1)); ?></strong>
                             <img src="<?php echo e($logo); ?>" alt="<?php echo e($restaurant['name']); ?>" onerror="this.style.display='none'; this.parentElement.classList.add('logo-fallback');">
@@ -53,12 +76,31 @@ $customer = current_customer();
                             <strong><?php echo e(substr($restaurant['name'], 0, 1)); ?></strong>
                         <?php endif; ?>
                     </span>
-                    <span>
+                    <span class="restaurant-showcase-content">
                         <strong><?php echo e($restaurant['name']); ?></strong>
+                        <?php if (!empty($restaurant['legal_name'])): ?><small><?php echo e($restaurant['legal_name']); ?></small><?php endif; ?>
                         <em><?php echo e($restaurant['address']); ?></em>
+                        <span class="restaurant-meta">
+                            <span><?php echo e(restaurant_hours_summary($availability, (int)$restaurant['id'])); ?></span>
+                            <?php if (!empty($restaurant['phone'])): ?><span><?php echo e($restaurant['phone']); ?></span><?php endif; ?>
+                        </span>
+                        <?php if (!empty($restaurant['reservation_message'])): ?>
+                            <span class="restaurant-message"><?php echo e($restaurant['reservation_message']); ?></span>
+                        <?php endif; ?>
+                        <span class="restaurant-select-label">Reservar neste restaurante</span>
                     </span>
                 </label>
             <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="panel reservation-details-panel" id="reservationDetails">
+        <div class="section-title">
+            <div>
+                <p class="eyebrow">Dados da reserva</p>
+                <h2>Escolha data, horário e preferências</h2>
+            </div>
+            <span class="selected-restaurant-pill" id="selectedRestaurantPill"></span>
         </div>
         <div class="grid two">
             <label>Data
