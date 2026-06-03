@@ -70,12 +70,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('success', 'Senha administrativa alterada.');
         redirect_to('manutencao.php');
     }
+
+    if ($action === 'create_admin') {
+        $name = trim($_POST['name']);
+        $email = trim($_POST['email']);
+        $password = trim($_POST['password']);
+        $status = $_POST['status'] === 'inactive' ? 'inactive' : 'active';
+        if ($name === '' || $email === '' || strlen($password) < 6) {
+            flash('error', 'Informe nome, e-mail e senha com pelo menos 6 caracteres.');
+            redirect_to('manutencao.php');
+        }
+        $stmt = $pdo->prepare('SELECT id FROM admins WHERE email = ?');
+        $stmt->execute(array($email));
+        if ($stmt->fetch()) {
+            flash('error', 'Já existe administrador com este e-mail.');
+            redirect_to('manutencao.php');
+        }
+        $stmt = $pdo->prepare('INSERT INTO admins (name, email, password_hash, status) VALUES (?, ?, ?, ?)');
+        $stmt->execute(array($name, $email, password_hash($password, PASSWORD_DEFAULT), $status));
+        flash('success', 'Administrador cadastrado.');
+        redirect_to('manutencao.php');
+    }
+
+    if ($action === 'update_admin_status') {
+        $adminId = (int)$_POST['admin_id'];
+        $status = $_POST['status'] === 'inactive' ? 'inactive' : 'active';
+        if ($admin && (int)$admin['id'] === $adminId && $status === 'inactive') {
+            flash('error', 'Você não pode inativar o próprio acesso logado.');
+            redirect_to('manutencao.php');
+        }
+        $stmt = $pdo->prepare('UPDATE admins SET status = ? WHERE id = ?');
+        $stmt->execute(array($status, $adminId));
+        flash('success', 'Administrador atualizado.');
+        redirect_to('manutencao.php');
+    }
 }
 
 require_once __DIR__ . '/../includes/header.php';
 
 $stmt = $pdo->query("SELECT r.*, rest.name restaurant_name FROM reservations r INNER JOIN restaurants rest ON rest.id = r.restaurant_id ORDER BY r.created_at DESC, r.id DESC LIMIT 80");
 $reservations = $stmt->fetchAll();
+$admins = $pdo->query("SELECT id, name, email, status, created_at FROM admins ORDER BY status, name, email")->fetchAll();
 ?>
 <section class="dashboard-hero compact-hero">
     <div>
@@ -85,6 +120,64 @@ $reservations = $stmt->fetchAll();
 </section>
 
 <section class="settings-grid">
+    <div class="panel">
+        <div class="section-title">
+            <div>
+                <p class="eyebrow">Novo acesso</p>
+                <h2>Cadastrar administrador</h2>
+            </div>
+        </div>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+            <input type="hidden" name="action" value="create_admin">
+            <label>Nome
+                <input type="text" name="name" required>
+            </label>
+            <label>E-mail
+                <input type="email" name="email" required>
+            </label>
+            <label>Senha inicial
+                <input type="password" name="password" required minlength="6">
+            </label>
+            <label>Status
+                <select name="status">
+                    <option value="active">Ativo</option>
+                    <option value="inactive">Inativo</option>
+                </select>
+            </label>
+            <button class="button primary" type="submit">Cadastrar administrador</button>
+        </form>
+    </div>
+
+    <div class="panel">
+        <div class="section-title">
+            <div>
+                <p class="eyebrow">Administradores</p>
+                <h2>Usuários administrativos</h2>
+            </div>
+        </div>
+        <div class="editable-list">
+            <?php foreach ($admins as $systemAdmin): ?>
+                <form method="post" class="editable-card">
+                    <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                    <input type="hidden" name="action" value="update_admin_status">
+                    <input type="hidden" name="admin_id" value="<?php echo (int)$systemAdmin['id']; ?>">
+                    <h3><?php echo e($systemAdmin['name']); ?></h3>
+                    <p><?php echo e($systemAdmin['email']); ?></p>
+                    <small>Cadastrado em <?php echo e(date('d/m/Y H:i', strtotime($systemAdmin['created_at']))); ?></small>
+                    <span class="badge"><?php echo $systemAdmin['status'] === 'active' ? 'Ativo' : 'Inativo'; ?></span>
+                    <?php if ($systemAdmin['status'] === 'active'): ?>
+                        <input type="hidden" name="status" value="inactive">
+                        <button class="button danger" type="submit" <?php echo $admin && (int)$admin['id'] === (int)$systemAdmin['id'] ? 'disabled' : ''; ?> onclick="return confirm('Inativar este administrador?');">Inativar</button>
+                    <?php else: ?>
+                        <input type="hidden" name="status" value="active">
+                        <button class="button ghost" type="submit">Ativar</button>
+                    <?php endif; ?>
+                </form>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
     <div class="panel">
         <div class="section-title">
             <div>

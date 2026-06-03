@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute(array($email));
     $admin = $stmt->fetch();
 
-    if ($admin && password_verify($password, $admin['password_hash'])) {
+    if ($admin && (!isset($admin['status']) || $admin['status'] === 'active') && password_verify($password, $admin['password_hash'])) {
         $_SESSION['admin'] = array('id' => (int)$admin['id'], 'name' => $admin['name'], 'email' => $admin['email']);
         redirect_to('index.php');
     }
