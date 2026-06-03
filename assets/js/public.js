@@ -118,6 +118,27 @@ function syncTimeOptions() {
         return;
     }
 
+    var specialPeriods = window.restaurantSpecialAvailability
+        && window.restaurantSpecialAvailability[restaurantId]
+        && window.restaurantSpecialAvailability[restaurantId][dateValue]
+        ? window.restaurantSpecialAvailability[restaurantId][dateValue]
+        : null;
+
+    if (specialPeriods) {
+        reservationTime.append(new Option('Selecione um horário', ''));
+        Object.keys(specialPeriods).forEach(function (periodKey) {
+            var period = specialPeriods[periodKey];
+            var label = period.period === 'lunch' ? 'Almoço' : 'Jantar';
+            var group = document.createElement('optgroup');
+            group.label = (period.name ? period.name + ' · ' : '') + label;
+            period.times.forEach(function (time) {
+                group.append(new Option(time, time));
+            });
+            reservationTime.append(group);
+        });
+        return;
+    }
+
     var weekday = new Date(dateValue + 'T12:00:00').getDay();
     var periods = window.restaurantAvailability
         && window.restaurantAvailability[restaurantId]

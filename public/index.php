@@ -19,6 +19,27 @@ foreach ($hoursRows as $row) {
         'close' => substr($row['closes_at'], 0, 5)
     );
 }
+$specialRows = $pdo->query(
+    "SELECT sd.restaurant_id, sd.special_date, sd.name, st.period, st.reservation_time
+     FROM restaurant_special_days sd
+     INNER JOIN restaurant_special_times st ON st.special_day_id = sd.id
+     WHERE sd.status = 'active' AND st.status = 'active'
+     ORDER BY sd.restaurant_id, sd.special_date, st.period, st.reservation_time"
+)->fetchAll();
+$specialAvailability = array();
+foreach ($specialRows as $row) {
+    $restaurantId = (int)$row['restaurant_id'];
+    $date = $row['special_date'];
+    $period = $row['period'];
+    if (!isset($specialAvailability[$restaurantId][$date][$period])) {
+        $specialAvailability[$restaurantId][$date][$period] = array(
+            'period' => $period,
+            'name' => $row['name'],
+            'times' => array()
+        );
+    }
+    $specialAvailability[$restaurantId][$date][$period]['times'][] = substr($row['reservation_time'], 0, 5);
+}
 $customer = current_customer();
 
 function restaurant_hours_summary($availability, $restaurantId)
@@ -99,6 +120,7 @@ function restaurant_hours_summary($availability, $restaurantId)
             <div>
                 <p class="eyebrow">Dados da reserva</p>
                 <h2>Escolha data, horário e preferências</h2>
+                <p class="muted-line">As reservas possuem tolerância máxima de 15 minutos após o horário marcado.</p>
             </div>
             <span class="selected-restaurant-pill" id="selectedRestaurantPill">Escolha um restaurante acima</span>
         </div>
@@ -220,6 +242,7 @@ function restaurant_hours_summary($availability, $restaurantId)
 
 <script>
 window.restaurantAvailability = <?php echo json_encode($availability); ?>;
+window.restaurantSpecialAvailability = <?php echo json_encode($specialAvailability); ?>;
 </script>
 <script src="../assets/js/public.js"></script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

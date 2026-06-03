@@ -68,6 +68,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect_to('configuracoes.php?hours_restaurant_id=' . $restaurantId . '#horarios');
     }
 
+    if ($action === 'save_special_day') {
+        $restaurantId = (int)$_POST['restaurant_id'];
+        $specialDate = $_POST['special_date'];
+        $name = trim($_POST['name']);
+        $period = $_POST['period'] === 'lunch' ? 'lunch' : 'dinner';
+        $status = $_POST['status'] === 'inactive' ? 'inactive' : 'active';
+        $times = preg_split('/\r\n|\r|\n|,|;/', (string)$_POST['times_text']);
+
+        $stmt = $pdo->prepare(
+            'INSERT INTO restaurant_special_days (restaurant_id, special_date, name, status)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE name = VALUES(name), status = VALUES(status)'
+        );
+        $stmt->execute(array($restaurantId, $specialDate, $name, $status));
+
+        $stmt = $pdo->prepare('SELECT id FROM restaurant_special_days WHERE restaurant_id = ? AND special_date = ?');
+        $stmt->execute(array($restaurantId, $specialDate));
+        $specialDayId = (int)$stmt->fetch()['id'];
+
+        $pdo->prepare('DELETE FROM restaurant_special_times WHERE special_day_id = ?')->execute(array($specialDayId));
+        $insertTime = $pdo->prepare('INSERT INTO restaurant_special_times (special_day_id, period, reservation_time) VALUES (?, ?, ?)');
+        foreach ($times as $time) {
+            $time = trim($time);
+            if (!preg_match('/^\d{2}:\d{2}$/', $time)) {
+                continue;
+            }
+            $insertTime->execute(array($specialDayId, $period, $time . ':00'));
+        }
+
+        flash('success', 'Dia especial salvo.');
+        redirect_to('configuracoes.php?hours_restaurant_id=' . $restaurantId . '#dias-especiais');
+    }
+
+    if ($action === 'delete_special_day') {
+        $restaurantId = (int)$_POST['restaurant_id'];
+        $stmt = $pdo->prepare('DELETE FROM restaurant_special_days WHERE id = ? AND restaurant_id = ?');
+        $stmt->execute(array((int)$_POST['special_day_id'], $restaurantId));
+        flash('success', 'Dia especial excluído.');
+        redirect_to('configuracoes.php?hours_restaurant_id=' . $restaurantId . '#dias-especiais');
+    }
+
     if ($action === 'environment') {
         $stmt = $pdo->prepare('INSERT INTO environments (restaurant_id, name, description, width, height) VALUES (?, ?, ?, ?, ?)');
         $stmt->execute(array((int)$_POST['restaurant_id'], trim($_POST['name']), trim($_POST['description']), (int)$_POST['width'], (int)$_POST['height']));
@@ -173,6 +214,19 @@ if ($hoursRestaurantId) {
         $restaurantHours[(int)$hour['weekday']][$hour['period']] = $hour;
     }
 }
+$specialDays = array();
+if ($hoursRestaurantId) {
+    $stmt = $pdo->prepare(
+        "SELECT sd.*, GROUP_CONCAT(TIME_FORMAT(st.reservation_time, '%H:%i') ORDER BY st.reservation_time SEPARATOR ', ') times_text
+         FROM restaurant_special_days sd
+         LEFT JOIN restaurant_special_times st ON st.special_day_id = sd.id AND st.status = 'active'
+         WHERE sd.restaurant_id = ?
+         GROUP BY sd.id
+         ORDER BY sd.special_date DESC"
+    );
+    $stmt->execute(array($hoursRestaurantId));
+    $specialDays = $stmt->fetchAll();
+}
 
 function default_hour($period)
 {
@@ -191,6 +245,7 @@ function default_hour($period)
 <section class="config-tabs">
     <button type="button" data-tab="layout">Layout de mesas</button>
     <button type="button" data-tab="horarios">Horários</button>
+    <button type="button" data-tab="dias-especiais">Dias especiais</button>
     <button type="button" data-tab="questionario">Questionário</button>
     <button type="button" data-tab="ocasioes">Ocasiões</button>
 </section>
@@ -406,6 +461,68 @@ function default_hour($period)
             <button class="button primary" type="submit">Salvar horários</button>
         </form>
     <?php endif; ?>
+</section>
+
+<section class="settings-grid config-section" id="dias-especiais">
+    <div class="panel">
+        <div class="section-title">
+            <div>
+                <p class="eyebrow">Exceções da agenda</p>
+                <h2>Dias especiais</h2>
+                <p class="muted-line">Quando houver cadastro ativo para uma data, o público verá somente os horários informados aqui.</p>
+            </div>
+        </div>
+        <?php if ($hoursRestaurantId): ?>
+            <form method="post" class="config-form">
+                <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                <input type="hidden" name="action" value="save_special_day">
+                <input type="hidden" name="restaurant_id" value="<?php echo (int)$hoursRestaurantId; ?>">
+                <label>Nome do dia especial
+                    <input type="text" name="name" required placeholder="Dia dos Namorados">
+                </label>
+                <div class="grid two">
+                    <label>Data
+                        <input type="date" name="special_date" required>
+                    </label>
+                    <label>Período
+                        <select name="period">
+                            <option value="dinner">Jantar</option>
+                            <option value="lunch">Almoço</option>
+                        </select>
+                    </label>
+                </div>
+                <label>Horários disponíveis
+                    <textarea name="times_text" rows="4" required placeholder="19:00&#10;21:30"></textarea>
+                </label>
+                <label>Status
+                    <select name="status">
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                    </select>
+                </label>
+                <button class="button primary" type="submit">Salvar dia especial</button>
+            </form>
+        <?php endif; ?>
+    </div>
+
+    <div class="panel">
+        <div class="section-title"><div><p class="eyebrow">Próximos cadastros</p><h2>Datas especiais salvas</h2></div></div>
+        <div class="editable-list">
+            <?php if (!$specialDays): ?><div class="empty-state"><strong>Nenhum dia especial cadastrado.</strong><p>Cadastre uma data para limitar os horários disponíveis ao público.</p></div><?php endif; ?>
+            <?php foreach ($specialDays as $specialDay): ?>
+                <form method="post" class="editable-card">
+                    <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                    <input type="hidden" name="action" value="delete_special_day">
+                    <input type="hidden" name="restaurant_id" value="<?php echo (int)$hoursRestaurantId; ?>">
+                    <input type="hidden" name="special_day_id" value="<?php echo (int)$specialDay['id']; ?>">
+                    <h3><?php echo e($specialDay['name']); ?></h3>
+                    <p><?php echo e(date('d/m/Y', strtotime($specialDay['special_date']))); ?> · <?php echo e($specialDay['times_text'] ?: 'Sem horários'); ?></p>
+                    <span class="badge"><?php echo e($specialDay['status']); ?></span>
+                    <button class="button danger" type="submit" onclick="return confirm('Excluir este dia especial?');">Excluir</button>
+                </form>
+            <?php endforeach; ?>
+        </div>
+    </div>
 </section>
 
 <section class="settings-grid config-section" id="questionario">

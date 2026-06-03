@@ -47,19 +47,34 @@ if (!$stmt->fetch()) {
     redirect_to('index.php');
 }
 
-$weekday = (int)date('w', strtotime($_POST['reservation_date']));
-$stmt = $pdo->prepare(
-    "SELECT COUNT(*) total
-     FROM restaurant_hours
-     WHERE restaurant_id = ?
-       AND weekday = ?
-       AND is_closed = 0
-       AND opens_at IS NOT NULL
-       AND closes_at IS NOT NULL
-       AND ? BETWEEN TIME_FORMAT(opens_at, '%H:%i') AND TIME_FORMAT(closes_at, '%H:%i')"
-);
-$stmt->execute(array($restaurantId, $weekday, $_POST['reservation_time']));
-$schedule = $stmt->fetch();
+$stmt = $pdo->prepare("SELECT id FROM restaurant_special_days WHERE restaurant_id = ? AND special_date = ? AND status = 'active'");
+$stmt->execute(array($restaurantId, $_POST['reservation_date']));
+$specialDay = $stmt->fetch();
+if ($specialDay) {
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) total
+         FROM restaurant_special_times
+         WHERE special_day_id = ?
+           AND status = 'active'
+           AND TIME_FORMAT(reservation_time, '%H:%i') = ?"
+    );
+    $stmt->execute(array((int)$specialDay['id'], $_POST['reservation_time']));
+    $schedule = $stmt->fetch();
+} else {
+    $weekday = (int)date('w', strtotime($_POST['reservation_date']));
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) total
+         FROM restaurant_hours
+         WHERE restaurant_id = ?
+           AND weekday = ?
+           AND is_closed = 0
+           AND opens_at IS NOT NULL
+           AND closes_at IS NOT NULL
+           AND ? BETWEEN TIME_FORMAT(opens_at, '%H:%i') AND TIME_FORMAT(closes_at, '%H:%i')"
+    );
+    $stmt->execute(array($restaurantId, $weekday, $_POST['reservation_time']));
+    $schedule = $stmt->fetch();
+}
 if ((int)$schedule['total'] === 0) {
     flash('error', 'Horário indisponível para o restaurante e data selecionados.');
     redirect_to('index.php');

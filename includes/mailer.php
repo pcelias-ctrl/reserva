@@ -242,6 +242,7 @@ function notify_reservation_created($reservation, $answers)
         'Horário: ' . $time,
         'Pessoas: ' . $reservation['party_size'],
         'Ocasião: ' . $reservation['occasion_name'],
+        'Tolerância: até 15 minutos após o horário marcado.',
         '',
         'Obrigado por escolher o i-Reserva.'
     );
@@ -260,6 +261,7 @@ function notify_reservation_created($reservation, $answers)
         'Horário: ' . $time,
         'Pessoas: ' . $reservation['party_size'],
         'Ocasião: ' . $reservation['occasion_name'],
+        'Tolerância: até 15 minutos após o horário marcado.',
         'Restrições alimentares: ' . ($reservation['dietary_restrictions'] ?: 'Não informado'),
         'Observações: ' . ($reservation['notes'] ?: 'Não informado')
     );
@@ -293,6 +295,7 @@ function reservation_status_email_message($reservation, $status)
         'Data: ' . $date,
         'Horário: ' . $time,
         'Pessoas: ' . $reservation['party_size'],
+        'Tolerância: até 15 minutos após o horário marcado.',
         '',
         'Em caso de dúvida, responda este e-mail ou fale diretamente com o restaurante.'
     ));
