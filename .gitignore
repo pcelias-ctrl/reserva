@@ -3,6 +3,7 @@
 .fly-ssh
 .fly-ssh-cert.pub
 *.log
+backups/
 vendor/
 node_modules/
 uploads/*
